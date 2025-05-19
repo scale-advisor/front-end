@@ -11,18 +11,20 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "autoprefixer": "^10.4.17",
+    "framer-motion": "^12.12.1",
     "next": "15.3.2",
+    "postcss": "^8.5.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^3.4.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.3.2",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.0",
-    "prettier": "^3.5.3",
-    "tailwindcss": "^4"
+    "prettier": "^3.5.3"
   }
 }
