@@ -2,20 +2,57 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import AuthSidebar from '@/components/AuthSidebar';
+import api from '@/lib/axios';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // 여기에 로그인 로직 구현
-    console.log('로그인 시도:', { email, password, rememberMe });
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // 백엔드 API 호출
+      const response = await api.post('/auth/login', {
+        email,
+        password,
+      });
+
+      // 응답에서 토큰 추출 및 저장
+      const { accessToken, refreshToken } = response.data;
+
+      // localStorage에 accessToken 저장 (axios 인터셉터에서 사용)
+      localStorage.setItem('token', accessToken);
+
+      // refreshToken은 쿠키에 저장 (httpOnly가 아니어도 보안을 위해 쿠키 사용)
+      if (refreshToken) {
+        document.cookie = `refreshToken=${refreshToken}; path=/; max-age=2592000; samesite=strict`;
+      }
+
+      // 로그인 성공 시 홈으로 리다이렉트
+      router.push('/');
+    } catch (err) {
+      // 오류 처리
+      console.error('로그인 오류:', err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const slides = [
@@ -140,6 +177,13 @@ export default function LoginPage() {
 
           {/* 로그인 폼 */}
           <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
+            {/* 에러 메시지 표시 */}
+            {error && (
+              <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+                {error}
+              </div>
+            )}
+
             {/* 이메일 입력 */}
             <div className="relative">
               <label className="block text-sm md:text-base text-gray-600 mb-1.5">
@@ -250,28 +294,50 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div>
-              <motion.button
-                type="submit"
-                className="w-full bg-blue-600 text-white py-2.5 md:py-3 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                로그인
-              </motion.button>
-            </div>
-
-            <div className="mt-4 text-center">
-              <span className="text-sm text-gray-600">
-                아직 계정이 없으신가요?{' '}
-                <a
-                  href="/register"
-                  className="font-medium text-blue-600 hover:text-blue-500"
+            <motion.button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full flex justify-center py-2.5 md:py-3 px-4 border border-transparent rounded-md shadow-sm text-sm md:text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 ${
+                isLoading ? 'opacity-70 cursor-wait' : ''
+              }`}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              {isLoading ? (
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
                 >
-                  회원가입
-                </a>
-              </span>
-            </div>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+              ) : (
+                '로그인'
+              )}
+            </motion.button>
+
+            <p className="mt-6 text-center text-sm text-gray-600">
+              계정이 없으신가요?{' '}
+              <a
+                href="/register"
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
+                회원가입
+              </a>
+            </p>
           </form>
         </div>
       </motion.div>
