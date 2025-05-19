@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import AuthSidebar from '@/components/AuthSidebar';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [activeSlide, setActiveSlide] = useState(0);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
 
@@ -16,23 +16,6 @@ export default function LoginPage() {
     e.preventDefault();
     // 여기에 로그인 로직 구현
     console.log('로그인 시도:', { email, password, rememberMe });
-  };
-
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction) => ({
-      zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-    }),
   };
 
   const slides = [
@@ -56,88 +39,10 @@ export default function LoginPage() {
     },
   ];
 
-  // 자동 슬라이드 기능 구현
-  useEffect(() => {
-    const slideInterval = setInterval(() => {
-      setActiveSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }, 5000); // 5초마다 슬라이드 변경
-
-    return () => clearInterval(slideInterval); // 컴포넌트 언마운트 시 타이머 제거
-  }, [slides.length]);
-
   return (
     <div className="flex flex-col md:flex-row h-screen w-full overflow-auto">
       {/* 왼쪽 섹션 - 설명 및 이미지 */}
-      <motion.div
-        className="w-full md:w-2/5 bg-gradient-to-br from-blue-50 to-blue-100 p-6 md:p-10 flex flex-col"
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="mb-6 md:mb-8">
-          <h2 className="text-blue-600 text-2xl font-bold">Scale Advisor</h2>
-        </div>
-
-        <div className="mt-6 md:mt-10">
-          <motion.div
-            key={activeSlide}
-            custom={1}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: 'spring', stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 },
-            }}
-            className="h-auto md:h-48"
-          >
-            <h1 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3">
-              {slides[activeSlide].title.split(' ').slice(0, -1).join(' ')}
-            </h1>
-            <h1 className="text-2xl md:text-3xl font-bold">
-              {slides[activeSlide].title.split(' ').slice(-1)[0]}
-            </h1>
-
-            <p className="text-sm md:text-base text-gray-600 mt-4 md:mt-6 leading-relaxed">
-              {slides[activeSlide].description}
-            </p>
-          </motion.div>
-        </div>
-
-        {/* 이미지 */}
-        <div className="flex justify-center items-center flex-grow relative mt-4 md:mt-6">
-          <motion.div
-            key={`image-${activeSlide}`}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="w-56 h-56 md:w-80 md:h-80 relative"
-          >
-            <div className="bg-white w-full h-full rounded-2xl flex items-center justify-center shadow-lg">
-              <img
-                src={slides[activeSlide].image}
-                alt={slides[activeSlide].title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </motion.div>
-        </div>
-
-        {/* 하단 인디케이터 */}
-        <div className="flex justify-center gap-2 md:gap-3 mt-6 md:mt-8 mb-4">
-          {slides.map((_, index) => (
-            <motion.div
-              key={index}
-              className={`h-2 md:h-2.5 rounded-full cursor-pointer ${activeSlide === index ? 'bg-blue-500 w-4 md:w-5' : 'bg-gray-300 w-2 md:w-2.5'}`}
-              onClick={() => setActiveSlide(index)}
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ duration: 0.2 }}
-            />
-          ))}
-        </div>
-      </motion.div>
+      <AuthSidebar slides={slides} />
 
       {/* 오른쪽 섹션 - 로그인 폼 */}
       <motion.div
@@ -248,11 +153,10 @@ export default function LoginPage() {
                   onFocus={() => setIsEmailFocused(true)}
                   onBlur={() => setIsEmailFocused(false)}
                   className={`w-full py-2.5 md:py-3 px-3 md:px-4 border ${
-                    isEmailFocused
-                      ? 'border-blue-500 ring-1 ring-blue-200'
-                      : 'border-gray-300'
-                  } rounded-lg bg-white focus:outline-none text-sm md:text-base transition-all duration-300`}
-                  placeholder="이메일을 입력하세요"
+                    isEmailFocused ? 'border-blue-500' : 'border-gray-300'
+                  } rounded-md focus:outline-none transition-all duration-200`}
+                  placeholder="example@example.com"
+                  required
                 />
               </div>
             </div>
@@ -270,133 +174,103 @@ export default function LoginPage() {
                   onFocus={() => setIsPasswordFocused(true)}
                   onBlur={() => setIsPasswordFocused(false)}
                   className={`w-full py-2.5 md:py-3 px-3 md:px-4 border ${
-                    isPasswordFocused
-                      ? 'border-blue-500 ring-1 ring-blue-200'
-                      : 'border-gray-300'
-                  } rounded-lg bg-white focus:outline-none text-sm md:text-base transition-all duration-300`}
+                    isPasswordFocused ? 'border-blue-500' : 'border-gray-300'
+                  } rounded-md focus:outline-none transition-all duration-200 pr-12`}
                   placeholder="비밀번호를 입력하세요"
+                  required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500 transition-colors duration-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 focus:outline-none"
                 >
                   {showPassword ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
                     >
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                       <path
-                        fillRule="evenodd"
-                        d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                        clipRule="evenodd"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
                       />
                     </svg>
                   ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
                     >
                       <path
-                        fillRule="evenodd"
-                        d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-                        clipRule="evenodd"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
                       />
-                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
                     </svg>
                   )}
                 </button>
               </div>
             </div>
 
-            {/* 로그인 상태 유지 */}
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex justify-between items-center">
               <div className="flex items-center">
-                <div
-                  className="relative w-5 h-5 cursor-pointer group"
-                  onClick={() => setRememberMe(!rememberMe)}
-                >
-                  <input
-                    type="checkbox"
-                    id="remember"
-                    checked={rememberMe}
-                    onChange={() => setRememberMe(!rememberMe)}
-                    className="sr-only"
-                  />
-                  <motion.div
-                    initial={{ backgroundColor: '#fff' }}
-                    animate={{
-                      backgroundColor: rememberMe ? '#3b82f6' : '#fff',
-                      borderColor: rememberMe ? '#3b82f6' : '#d1d5db',
-                    }}
-                    transition={{ duration: 0.1 }}
-                    className={`w-5 h-5 border rounded transition-colors duration-200 flex items-center justify-center`}
-                  >
-                    {rememberMe && (
-                      <motion.svg
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.1 }}
-                        className="w-3.5 h-3.5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="3"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </motion.svg>
-                    )}
-                  </motion.div>
-                </div>
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
                 <label
-                  htmlFor="remember"
-                  className="text-sm md:text-base text-gray-600 cursor-pointer ml-2"
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-700"
                 >
                   로그인 상태 유지
                 </label>
               </div>
-              <motion.a
-                href="#"
-                className="text-sm md:text-base text-blue-500 hover:text-blue-700 transition-colors duration-300"
-                whileHover={{ scale: 1.03 }}
-              >
-                비밀번호 찾기
-              </motion.a>
+              <div className="text-sm">
+                <a
+                  href="#"
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
+                  비밀번호 찾기
+                </a>
+              </div>
             </div>
 
-            {/* 로그인 버튼 */}
-            <motion.button
-              type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl py-3 md:py-3.5 font-medium transition-all duration-300 shadow-md mt-6"
-              whileHover={{
-                scale: 1.02,
-                boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3)',
-              }}
-              whileTap={{ scale: 0.98 }}
-            >
-              로그인
-            </motion.button>
-
-            {/* 회원가입 링크 */}
-            <div className="text-center mt-6 md:mt-8 text-sm md:text-base text-gray-600">
-              계정이 없으신가요?{' '}
-              <motion.a
-                href="#"
-                className="text-blue-500 hover:text-blue-700 transition-colors duration-300 font-medium"
-                whileHover={{ scale: 1.03 }}
+            <div>
+              <motion.button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2.5 md:py-3 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
               >
-                회원가입
-              </motion.a>
+                로그인
+              </motion.button>
+            </div>
+
+            <div className="mt-4 text-center">
+              <span className="text-sm text-gray-600">
+                아직 계정이 없으신가요?{' '}
+                <a
+                  href="/register"
+                  className="font-medium text-blue-600 hover:text-blue-500"
+                >
+                  회원가입
+                </a>
+              </span>
             </div>
           </form>
         </div>
