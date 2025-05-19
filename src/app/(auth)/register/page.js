@@ -2,40 +2,205 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import AuthSidebar from '@/components/AuthSidebar';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] =
+    useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // 여기에 로그인 로직 구현
-    console.log('로그인 시도:', { email, password, rememberMe });
+    // 여기에 회원가입 로직 구현
+    console.log('회원가입 시도:', { email, password, agreeTerms });
   };
 
   const slides = [
     {
-      title: '쉽고 편하게 프로젝트 규모를 추정하세요',
+      title: '프로젝트 관리가 더 쉬워집니다',
       description:
-        '규모산정 자원시간 업데이트 FP, SV/정량, LOC 등을 분석하실 수 있습니다. 목록보기로 프로젝트를 관리하세요!',
-      image: 'path/to/estimate-project-size-image.jpg',
+        '회원가입 후 프로젝트 관리 도구를 통해 업무 효율성을 높이고 팀과 원활하게 소통하세요.',
+      svgImage: (
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 400 400"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient
+              id="bg-gradient1"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stopColor="#e3f2fd" />
+              <stop offset="100%" stopColor="#bbdefb" />
+            </linearGradient>
+          </defs>
+          <rect
+            x="50"
+            y="60"
+            width="300"
+            height="200"
+            rx="15"
+            fill="url(#bg-gradient1)"
+            stroke="#64b5f6"
+            strokeWidth="3"
+          />
+
+          {/* 프로젝트 관리 도구 사용 이미지 */}
+          <rect
+            x="70"
+            y="80"
+            width="260"
+            height="160"
+            fill="#90caf9"
+            opacity="0.8"
+          />
+          <text
+            x="200"
+            y="150"
+            fontFamily="Arial"
+            fontSize="24"
+            fill="#1565c0"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            프로젝트 관리
+          </text>
+          <circle cx="150" cy="120" r="10" fill="#64b5f6" />
+          <circle cx="250" cy="120" r="10" fill="#64b5f6" />
+          <rect x="130" y="180" width="140" height="20" fill="#64b5f6" />
+        </svg>
+      ),
     },
     {
-      title: '직관적인 분석 도구로 데이터를 시각화하세요',
+      title: '데이터 중심 의사결정으로 성과를 높이세요',
       description:
-        '다양한 차트와 그래프를 통해 프로젝트 진행 상황을 한눈에 파악할 수 있습니다.',
-      image: 'path/to/visualize-data-image.jpg',
+        '다양한 분석 도구와 대시보드를 활용하여 비즈니스 인사이트를 얻고 데이터 기반의 의사결정을 내리세요.',
+      svgImage: (
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 400 400"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient
+              id="bg-gradient2"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stopColor="#f3e5f5" />
+              <stop offset="100%" stopColor="#e1bee7" />
+            </linearGradient>
+          </defs>
+          <rect
+            x="50"
+            y="60"
+            width="300"
+            height="200"
+            rx="15"
+            fill="url(#bg-gradient2)"
+            stroke="#ab47bc"
+            strokeWidth="3"
+          />
+
+          {/* 데이터 분석 대시보드 사용 이미지 */}
+          <rect
+            x="70"
+            y="80"
+            width="260"
+            height="160"
+            fill="#ce93d8"
+            opacity="0.8"
+          />
+          <text
+            x="200"
+            y="150"
+            fontFamily="Arial"
+            fontSize="24"
+            fill="#ffffff"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            데이터 분석
+          </text>
+          <rect x="100" y="120" width="200" height="20" fill="#9c27b0" />
+          <rect x="100" y="160" width="200" height="20" fill="#9c27b0" />
+          <circle cx="200" cy="200" r="15" fill="#9c27b0" />
+        </svg>
+      ),
     },
     {
-      title: '팀과 실시간으로 협업하세요',
+      title: '지금 바로 시작하세요',
       description:
-        '팀원들과 함께 프로젝트를 관리하고 실시간으로 변경사항을 확인할 수 있습니다.',
-      image: 'path/to/collaborate-in-real-time-image.jpg',
+        '회원가입 후 즉시 사용 가능한 플랫폼으로 비즈니스 성장을 가속화하세요. 첫 달 무료 체험을 놓치지 마세요!',
+      svgImage: (
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 400 400"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient
+              id="bg-gradient3"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stopColor="#e8f5e9" />
+              <stop offset="100%" stopColor="#c8e6c9" />
+            </linearGradient>
+          </defs>
+          <rect
+            x="50"
+            y="60"
+            width="300"
+            height="200"
+            rx="15"
+            fill="url(#bg-gradient3)"
+            stroke="#66bb6a"
+            strokeWidth="3"
+          />
+
+          {/* 플랫폼 시작 이미지 */}
+          <rect
+            x="100"
+            y="100"
+            width="200"
+            height="150"
+            fill="#4caf50"
+            opacity="0.8"
+          />
+          <text
+            x="200"
+            y="150"
+            fontFamily="Arial"
+            fontSize="24"
+            fill="#ffffff"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            시작하기
+          </text>
+          <polygon points="200,120 220,180 180,180" fill="#ffffff" />
+        </svg>
+      ),
     },
   ];
 
@@ -44,7 +209,7 @@ export default function LoginPage() {
       {/* 왼쪽 섹션 - 설명 및 이미지 */}
       <AuthSidebar slides={slides} />
 
-      {/* 오른쪽 섹션 - 로그인 폼 */}
+      {/* 오른쪽 섹션 - 회원가입 폼 */}
       <motion.div
         className="w-full md:w-3/5 flex items-center justify-center bg-white p-6 md:p-10"
         initial={{ opacity: 0, x: 50 }}
@@ -53,7 +218,7 @@ export default function LoginPage() {
       >
         <div className="w-full max-w-md p-6">
           <h2 className="text-2xl md:text-3xl font-semibold mb-8 text-center text-gray-800">
-            로그인
+            회원가입
           </h2>
 
           {/* 소셜 로그인 버튼들 */}
@@ -138,7 +303,7 @@ export default function LoginPage() {
             <div className="flex-grow h-px bg-gray-200"></div>
           </div>
 
-          {/* 로그인 폼 */}
+          {/* 회원가입 폼 */}
           <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
             {/* 이메일 입력 */}
             <div className="relative">
@@ -224,29 +389,110 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex justify-between items-center">
+            {/* 비밀번호 확인 입력 */}
+            <div className="relative">
+              <label className="block text-sm md:text-base text-gray-600 mb-1.5">
+                비밀번호 확인
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onFocus={() => setIsConfirmPasswordFocused(true)}
+                  onBlur={() => setIsConfirmPasswordFocused(false)}
+                  className={`w-full py-2.5 md:py-3 px-3 md:px-4 border ${
+                    isConfirmPasswordFocused
+                      ? 'border-blue-500'
+                      : 'border-gray-300'
+                  } rounded-md focus:outline-none transition-all duration-200 pr-12`}
+                  placeholder="비밀번호를 다시 입력하세요"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 focus:outline-none"
+                >
+                  {showConfirmPassword ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {password && confirmPassword && password !== confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">
+                  비밀번호가 일치하지 않습니다
+                </p>
+              )}
+            </div>
+
+            {/* 이용약관 동의 */}
+            <div className="mt-4">
               <div className="flex items-center">
                 <input
-                  id="remember-me"
+                  id="agree-terms"
                   type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
+                  checked={agreeTerms}
+                  onChange={(e) => setAgreeTerms(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  required
                 />
                 <label
-                  htmlFor="remember-me"
+                  htmlFor="agree-terms"
                   className="ml-2 block text-sm text-gray-700"
                 >
-                  로그인 상태 유지
+                  <span>
+                    <a
+                      href="#"
+                      className="text-blue-600 hover:text-blue-500"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      이용약관
+                    </a>
+                    과{' '}
+                    <a
+                      href="#"
+                      className="text-blue-600 hover:text-blue-500"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      개인정보 처리방침
+                    </a>
+                    에 동의합니다
+                  </span>
                 </label>
-              </div>
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-blue-600 hover:text-blue-500"
-                >
-                  비밀번호 찾기
-                </a>
               </div>
             </div>
 
@@ -256,20 +502,21 @@ export default function LoginPage() {
                 className="w-full bg-blue-600 text-white py-2.5 md:py-3 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
+                disabled={password !== confirmPassword}
               >
-                로그인
+                회원가입
               </motion.button>
             </div>
 
             <div className="mt-4 text-center">
               <span className="text-sm text-gray-600">
-                아직 계정이 없으신가요?{' '}
-                <a
-                  href="/register"
+                이미 계정이 있으신가요?{' '}
+                <Link
+                  href="/login"
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
-                  회원가입
-                </a>
+                  로그인
+                </Link>
               </span>
             </div>
           </form>
