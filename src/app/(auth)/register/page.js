@@ -4,25 +4,66 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
+import Link from 'next/link';
+import AuthSidebar from '@/components/AuthSidebar';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [activeSlide, setActiveSlide] = useState(0);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isNameFocused, setIsNameFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] =
     useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
+  // 비밀번호 조건 검증 함수
+  const validatePassword = (value) => {
+    // 최소 8자 이상
+    const lengthValid = value.length >= 8;
+    // 영문 포함
+    const hasLetter = /[A-Za-z]/.test(value);
+    // 숫자 포함
+    const hasNumber = /\d/.test(value);
+    // 특수문자 포함
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value);
+
+    if (!value) return '';
+    if (!lengthValid) return '비밀번호는 최소 8자 이상이어야 합니다.';
+    if (!hasLetter) return '영문자를 포함해야 합니다.';
+    if (!hasNumber) return '숫자를 포함해야 합니다.';
+    if (!hasSpecial) return '특수문자를 포함해야 합니다.';
+
+    return '';
+  };
+
+  // 비밀번호 입력 시 유효성 검사
+  useEffect(() => {
+    if (password) {
+      const error = validatePassword(password);
+      setPasswordError(error);
+    } else {
+      setPasswordError('');
+    }
+  }, [password]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 비밀번호 조건 검증
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      setError(passwordValidationError);
+      return;
+    }
 
     // 비밀번호 일치 검증
     if (password !== confirmPassword) {
@@ -40,14 +81,19 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
+      // API 요청 URL 로그 출력
+      const endpoint = '/auth/sign-up';
+      console.log('API 요청 URL:', api.defaults.baseURL + endpoint);
+
       // 백엔드 API 호출
-      await api.post('/auth/register', {
+      await api.post(endpoint, {
+        name,
         email,
         password,
       });
 
-      // 회원가입 성공 시 이메일 전송 완료 페이지로 이동
-      router.push('/login?registered=true');
+      // 회원가입 성공 시 이메일 확인 페이지로 이동
+      router.push(`/email-verification?email=${encodeURIComponent(email)}`);
     } catch (err) {
       // 오류 처리
       console.error('회원가입 오류:', err);
@@ -61,282 +107,10 @@ export default function RegisterPage() {
     }
   };
 
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-    },
-    exit: (direction) => ({
-      zIndex: 0,
-      x: direction < 0 ? 300 : -300,
-      opacity: 0,
-    }),
-  };
-
-  const slides = [
-    {
-      title: '프로젝트 관리가 더 쉬워집니다',
-      description:
-        '회원가입 후 프로젝트 관리 도구를 통해 업무 효율성을 높이고 팀과 원활하게 소통하세요.',
-      svgImage: (
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 400 400"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <linearGradient
-              id="bg-gradient1"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
-              <stop offset="0%" stopColor="#e3f2fd" />
-              <stop offset="100%" stopColor="#bbdefb" />
-            </linearGradient>
-          </defs>
-          <rect
-            x="50"
-            y="60"
-            width="300"
-            height="200"
-            rx="15"
-            fill="url(#bg-gradient1)"
-            stroke="#64b5f6"
-            strokeWidth="3"
-          />
-
-          {/* 프로젝트 관리 도구 사용 이미지 */}
-          <rect
-            x="70"
-            y="80"
-            width="260"
-            height="160"
-            fill="#90caf9"
-            opacity="0.8"
-          />
-          <text
-            x="200"
-            y="150"
-            fontFamily="Arial"
-            fontSize="24"
-            fill="#1565c0"
-            fontWeight="bold"
-            textAnchor="middle"
-          >
-            프로젝트 관리
-          </text>
-          <circle cx="150" cy="120" r="10" fill="#64b5f6" />
-          <circle cx="250" cy="120" r="10" fill="#64b5f6" />
-          <rect x="130" y="180" width="140" height="20" fill="#64b5f6" />
-        </svg>
-      ),
-    },
-    {
-      title: '데이터 중심 의사결정으로 성과를 높이세요',
-      description:
-        '다양한 분석 도구와 대시보드를 활용하여 비즈니스 인사이트를 얻고 데이터 기반의 의사결정을 내리세요.',
-      svgImage: (
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 400 400"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <linearGradient
-              id="bg-gradient2"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
-              <stop offset="0%" stopColor="#f3e5f5" />
-              <stop offset="100%" stopColor="#e1bee7" />
-            </linearGradient>
-          </defs>
-          <rect
-            x="50"
-            y="60"
-            width="300"
-            height="200"
-            rx="15"
-            fill="url(#bg-gradient2)"
-            stroke="#ab47bc"
-            strokeWidth="3"
-          />
-
-          {/* 데이터 분석 대시보드 사용 이미지 */}
-          <rect
-            x="70"
-            y="80"
-            width="260"
-            height="160"
-            fill="#ce93d8"
-            opacity="0.8"
-          />
-          <text
-            x="200"
-            y="150"
-            fontFamily="Arial"
-            fontSize="24"
-            fill="#ffffff"
-            fontWeight="bold"
-            textAnchor="middle"
-          >
-            데이터 분석
-          </text>
-          <rect x="100" y="120" width="200" height="20" fill="#9c27b0" />
-          <rect x="100" y="160" width="200" height="20" fill="#9c27b0" />
-          <circle cx="200" cy="200" r="15" fill="#9c27b0" />
-        </svg>
-      ),
-    },
-    {
-      title: '지금 바로 시작하세요',
-      description:
-        '회원가입 후 즉시 사용 가능한 플랫폼으로 비즈니스 성장을 가속화하세요. 첫 달 무료 체험을 놓치지 마세요!',
-      svgImage: (
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 400 400"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <linearGradient
-              id="bg-gradient3"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="100%"
-            >
-              <stop offset="0%" stopColor="#e8f5e9" />
-              <stop offset="100%" stopColor="#c8e6c9" />
-            </linearGradient>
-          </defs>
-          <rect
-            x="50"
-            y="60"
-            width="300"
-            height="200"
-            rx="15"
-            fill="url(#bg-gradient3)"
-            stroke="#66bb6a"
-            strokeWidth="3"
-          />
-
-          {/* 플랫폼 시작 이미지 */}
-          <rect
-            x="100"
-            y="100"
-            width="200"
-            height="150"
-            fill="#4caf50"
-            opacity="0.8"
-          />
-          <text
-            x="200"
-            y="150"
-            fontFamily="Arial"
-            fontSize="24"
-            fill="#ffffff"
-            fontWeight="bold"
-            textAnchor="middle"
-          >
-            시작하기
-          </text>
-          <polygon points="200,120 220,180 180,180" fill="#ffffff" />
-        </svg>
-      ),
-    },
-  ];
-
-  // 자동 슬라이드 기능 구현
-  useEffect(() => {
-    const slideInterval = setInterval(() => {
-      setActiveSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }, 5000); // 5초마다 슬라이드 변경
-
-    return () => clearInterval(slideInterval); // 컴포넌트 언마운트 시 타이머 제거
-  }, [slides.length]);
-
   return (
     <div className="flex flex-col md:flex-row h-screen w-full overflow-auto">
-      {/* 왼쪽 섹션 - 설명 및 이미지 */}
-      <motion.div
-        className="w-full md:w-2/5 bg-gradient-to-br from-blue-50 to-blue-100 p-6 md:p-10 flex flex-col"
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="mb-6 md:mb-8">
-          <h2 className="text-blue-600 text-2xl font-bold">Scale Advisor</h2>
-        </div>
-
-        <div className="mt-6 md:mt-10">
-          <motion.div
-            key={activeSlide}
-            custom={1}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: 'spring', stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 },
-            }}
-            className="h-auto md:h-48"
-          >
-            <h1 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3">
-              {slides[activeSlide].title.split(' ').slice(0, -1).join(' ')}
-            </h1>
-            <h1 className="text-2xl md:text-3xl font-bold">
-              {slides[activeSlide].title.split(' ').slice(-1)[0]}
-            </h1>
-
-            <p className="text-sm md:text-base text-gray-600 mt-4 md:mt-6 leading-relaxed">
-              {slides[activeSlide].description}
-            </p>
-          </motion.div>
-        </div>
-
-        {/* 이미지 */}
-        <div className="flex justify-center items-center flex-grow relative mt-4 md:mt-6">
-          <motion.div
-            key={`image-${activeSlide}`}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="w-56 h-56 md:w-80 md:h-80 relative"
-          >
-            <div className="bg-white w-full h-full rounded-2xl flex items-center justify-center shadow-lg">
-              {slides[activeSlide].svgImage}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* 하단 인디케이터 */}
-        <div className="flex justify-center gap-2 md:gap-3 mt-6 md:mt-8 mb-4">
-          {slides.map((_, index) => (
-            <motion.div
-              key={index}
-              className={`h-2 md:h-2.5 rounded-full cursor-pointer ${activeSlide === index ? 'bg-blue-500 w-4 md:w-5' : 'bg-gray-300 w-2 md:w-2.5'}`}
-              onClick={() => setActiveSlide(index)}
-              whileHover={{ scale: 1.2 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ duration: 0.2 }}
-            />
-          ))}
-        </div>
-      </motion.div>
+      {/* 왼쪽 섹션 - AuthSidebar 컴포넌트 */}
+      <AuthSidebar />
 
       {/* 오른쪽 섹션 - 회원가입 폼 */}
       <motion.div
@@ -357,6 +131,31 @@ export default function RegisterPage() {
                 {error}
               </div>
             )}
+
+            {/* 이름 입력 필드 */}
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm md:text-base text-gray-600 mb-1.5"
+              >
+                이름
+              </label>
+              <div>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onFocus={() => setIsNameFocused(true)}
+                  onBlur={() => setIsNameFocused(false)}
+                  required
+                  placeholder="이름을 입력하세요"
+                  className={`w-full py-2.5 md:py-3 px-3 md:px-4 border ${
+                    isNameFocused ? 'border-blue-500' : 'border-gray-300'
+                  } rounded-md focus:outline-none transition-all duration-200`}
+                />
+              </div>
+            </div>
 
             {/* 이메일 입력 필드 */}
             <div>
@@ -402,7 +201,11 @@ export default function RegisterPage() {
                   required
                   placeholder="비밀번호를 입력하세요"
                   className={`w-full py-2.5 md:py-3 px-3 md:px-4 border ${
-                    isPasswordFocused ? 'border-blue-500' : 'border-gray-300'
+                    isPasswordFocused
+                      ? 'border-blue-500'
+                      : passwordError
+                        ? 'border-red-400'
+                        : 'border-gray-300'
                   } rounded-md focus:outline-none transition-all duration-200 pr-12`}
                 />
                 <button
@@ -448,9 +251,13 @@ export default function RegisterPage() {
                   )}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                8자 이상의 영문, 숫자, 특수문자 조합
-              </p>
+              {password && passwordError ? (
+                <p className="mt-1 text-xs text-red-500">{passwordError}</p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-500">
+                  8자 이상의 영문, 숫자, 특수문자 조합
+                </p>
+              )}
             </div>
 
             {/* 비밀번호 확인 입력 필드 */}
@@ -573,9 +380,11 @@ export default function RegisterPage() {
                 isLoading || !agreeTerms || password !== confirmPassword
               }
               className={`w-full flex justify-center py-2.5 md:py-3 px-4 border border-transparent rounded-md shadow-sm text-sm md:text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 ${
-                isLoading || !agreeTerms || password !== confirmPassword
-                  ? 'opacity-70 cursor-not-allowed'
-                  : ''
+                isLoading
+                  ? 'opacity-100 cursor-wait'
+                  : !agreeTerms || password !== confirmPassword
+                    ? 'opacity-100 cursor-not-allowed'
+                    : ''
               }`}
               whileHover={{
                 scale: agreeTerms && password === confirmPassword ? 1.01 : 1,
@@ -612,12 +421,12 @@ export default function RegisterPage() {
 
             <p className="mt-4 text-center text-sm text-gray-600">
               이미 계정이 있으신가요?{' '}
-              <a
-                href="/login"
+              <Link
                 className="font-medium text-blue-600 hover:text-blue-500"
+                href="/login"
               >
                 로그인
-              </a>
+              </Link>
             </p>
           </form>
         </div>

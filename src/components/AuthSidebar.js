@@ -4,7 +4,29 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
-export default function AuthSidebar({ slides }) {
+// 기본 슬라이드 데이터
+const DEFAULT_SLIDES = [
+  {
+    title: '쉽고 편하게 프로젝트 규모를 추정하세요',
+    description:
+      '규모산정 자원시간 업데이트 FP, SV/정량, LOC 등을 분석하실 수 있습니다. 목록보기로 프로젝트를 관리하세요!',
+    // image: 'path/to/estimate-project-size-image.jpg',
+  },
+  {
+    title: '직관적인 분석 도구로 데이터를 시각화하세요',
+    description:
+      '다양한 차트와 그래프를 통해 프로젝트 진행 상황을 한눈에 파악할 수 있습니다.',
+    // image: 'path/to/visualize-data-image.jpg',
+  },
+  {
+    title: '팀과 실시간으로 협업하세요',
+    description:
+      '팀원들과 함께 프로젝트를 관리하고 실시간으로 변경사항을 확인할 수 있습니다.',
+    // image: 'path/to/collaborate-in-real-time-image.jpg',
+  },
+];
+
+export default function AuthSidebar({ slides = DEFAULT_SLIDES }) {
   const [activeSlide, setActiveSlide] = useState(0);
 
   const slideVariants = {
@@ -74,7 +96,7 @@ export default function AuthSidebar({ slides }) {
       </div>
 
       {/* 이미지 */}
-      <div className="flex justify-center items-center flex-grow relative mt-4 md:mt-6">
+      <div className="flex justify-center items-center flex-grow relative mt-4 md:mt-0">
         <motion.div
           key={`image-${activeSlide}`}
           initial={{ opacity: 0, scale: 0.8 }}
