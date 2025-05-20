@@ -3,8 +3,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import AuthSidebar from '@/components/AuthSidebar';
 import api from '@/lib/axios';
+import useAuthStore from '@/store/useAuthStore';
+import kakaoApi from '@/lib/kakaoAxios';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,28 +20,41 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  // Zustand 스토어에서 login 액션 가져오기
+  const login = useAuthStore((state) => state.login);
+
+  //카카오 로그인 실행 함수
+  const handleKakaoLogin = async () => {
+    try {
+      console.log('카카오 로그인 실행');
+      const response = await api.get('/auth/kakao/authorize');
+      const { redirectUrl } = response.data;
+      router.push(redirectUrl);
+      console.log(response.data); 
+    } catch (err) {
+      console.error('카카오 로그인 오류:', err);
+    }
+  };
+
+  //베이직 로그인 실행 함수
+  const handleBasicLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
       // 백엔드 API 호출
-      const response = await api.post('/auth/login', {
+      const response = await kakaoApi.post('/auth/login/email', {
         email,
         password,
       });
 
-      // 응답에서 토큰 추출 및 저장
-      const { accessToken, refreshToken } = response.data;
+      // 응답에서 토큰과 사용자 정보 추출
+      const { accessToken, user } = response.data;
 
-      // localStorage에 accessToken 저장 (axios 인터셉터에서 사용)
-      localStorage.setItem('token', accessToken);
-
-      // refreshToken은 쿠키에 저장 (httpOnly가 아니어도 보안을 위해 쿠키 사용)
-      if (refreshToken) {
-        document.cookie = `refreshToken=${refreshToken}; path=/; max-age=2592000; samesite=strict`;
-      }
+      // Zustand 스토어에 로그인 정보 저장
+      // 참고: login 함수 내부에서 localStorage.setItem('token') 호출함
+      login(user, accessToken);
 
       // 로그인 성공 시 홈으로 리다이렉트
       router.push('/');
@@ -55,31 +71,10 @@ export default function LoginPage() {
     }
   };
 
-  const slides = [
-    {
-      title: '쉽고 편하게 프로젝트 규모를 추정하세요',
-      description:
-        '규모산정 자원시간 업데이트 FP, SV/정량, LOC 등을 분석하실 수 있습니다. 목록보기로 프로젝트를 관리하세요!',
-      image: 'path/to/estimate-project-size-image.jpg',
-    },
-    {
-      title: '직관적인 분석 도구로 데이터를 시각화하세요',
-      description:
-        '다양한 차트와 그래프를 통해 프로젝트 진행 상황을 한눈에 파악할 수 있습니다.',
-      image: 'path/to/visualize-data-image.jpg',
-    },
-    {
-      title: '팀과 실시간으로 협업하세요',
-      description:
-        '팀원들과 함께 프로젝트를 관리하고 실시간으로 변경사항을 확인할 수 있습니다.',
-      image: 'path/to/collaborate-in-real-time-image.jpg',
-    },
-  ];
-
   return (
     <div className="flex flex-col md:flex-row h-screen w-full overflow-auto">
       {/* 왼쪽 섹션 - 설명 및 이미지 */}
-      <AuthSidebar slides={slides} />
+      <AuthSidebar />
 
       {/* 오른쪽 섹션 - 로그인 폼 */}
       <motion.div
@@ -93,64 +88,13 @@ export default function LoginPage() {
             로그인
           </h2>
 
-          {/* 소셜 로그인 버튼들 */}
-          <div className="flex justify-center space-x-6 mb-8">
+          {/* 카카오 로그인 버튼 */}
+          <div className="mb-8">
             <motion.button
-              className="w-12 h-12 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label="Google 로그인"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-                  <path
-                    fill="#4285F4"
-                    d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"
-                  />
-                </g>
-              </svg>
-            </motion.button>
-
-            <motion.button
-              className="w-12 h-12 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm hover:shadow-md transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label="GitHub 로그인"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
-                  fill="#333"
-                />
-              </svg>
-            </motion.button>
-
-            <motion.button
-              className="w-12 h-12 flex items-center justify-center rounded-full border border-[#FEE500] bg-[#FEE500] text-gray-800 shadow-sm hover:shadow-md transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              onClick={handleKakaoLogin}
+              className="w-full flex items-center justify-center py-3 px-4 rounded-md border border-[#FEE500] bg-[#FEE500] text-gray-800 font-medium shadow-sm hover:shadow-md transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               aria-label="Kakao 로그인"
             >
               <svg
@@ -158,25 +102,30 @@ export default function LoginPage() {
                 height="22"
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
+                className="mr-2"
               >
                 <path
                   d="M12 3C7.0374 3 3 6.28866 3 10.3368C3 13.0289 4.7748 15.3683 7.36155 16.5384C7.16807 17.1722 6.45509 19.5369 6.3659 19.9309C6.24932 20.4999 6.59543 20.4964 6.8356 20.3519C7.01992 20.2427 9.95582 18.2364 10.8954 17.6319C11.2605 17.678 11.6266 17.7036 12 17.7036C16.9626 17.7036 21 14.4149 21 10.3368C21 6.28866 16.9626 3 12 3Z"
                   fill="#191919"
                 />
               </svg>
+              카카오로 로그인
             </motion.button>
           </div>
 
           <div className="flex items-center justify-center mb-6 md:mb-8">
             <div className="flex-grow h-px bg-gray-200"></div>
             <span className="mx-4 text-sm md:text-base text-gray-500">
-              또는
+              또는 이메일로 로그인
             </span>
             <div className="flex-grow h-px bg-gray-200"></div>
           </div>
 
           {/* 로그인 폼 */}
-          <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
+          <form
+            onSubmit={handleBasicLoginSubmit}
+            className="space-y-5 md:space-y-6"
+          >
             {/* 에러 메시지 표시 */}
             {error && (
               <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
@@ -285,12 +234,14 @@ export default function LoginPage() {
                 </label>
               </div>
               <div className="text-sm">
-                <a
-                  href="#"
+                {' '}
+                <Link
+                  href="/forgot-password"
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
-                  비밀번호 찾기
-                </a>
+                  {' '}
+                  비밀번호 찾기{' '}
+                </Link>{' '}
               </div>
             </div>
 
@@ -330,13 +281,15 @@ export default function LoginPage() {
             </motion.button>
 
             <p className="mt-6 text-center text-sm text-gray-600">
+              {' '}
               계정이 없으신가요?{' '}
-              <a
+              <Link
                 href="/register"
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                회원가입
-              </a>
+                {' '}
+                회원가입{' '}
+              </Link>{' '}
             </p>
           </form>
         </div>
