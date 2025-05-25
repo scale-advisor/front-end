@@ -29,8 +29,8 @@ export default function AuthGuard({ children, publicPaths = [] }) {
     '/register',
     '/email-verification',
     '/reset-password',
-    '/apis/auth',
-    '/forgot-password'
+    '/auth',
+    '/forgot-password',
   ];
 
   // 모든 공개 경로 목록
