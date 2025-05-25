@@ -12,7 +12,8 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const pwdResetRedirectUrl = 'http://localhost:3000';
+  const pwdResetRedirectUrl =
+    typeof window !== 'undefined' ? window.location.origin : '';
   // 비밀번호 찾기 요청 처리 함수
   const handleSubmit = async (e) => {
     e.preventDefault();

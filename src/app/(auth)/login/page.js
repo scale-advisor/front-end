@@ -29,8 +29,9 @@ export default function LoginPage() {
       console.log('카카오 로그인 실행');
       const response = await api.get('/auth/kakao/authorize');
       const { redirectUrl } = response.data;
+      
       router.push(redirectUrl);
-      console.log(response.data); 
+      
     } catch (err) {
       console.error('카카오 로그인 오류:', err);
     }
@@ -44,7 +45,7 @@ export default function LoginPage() {
 
     try {
       // 백엔드 API 호출
-      const response = await kakaoApi.post('/auth/login/email', {
+      const response = await api.post('/auth/login/email', {
         email,
         password,
       });

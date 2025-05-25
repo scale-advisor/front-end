@@ -17,7 +17,7 @@ function EmailVerificationContent() {
   const [initialSent, setInitialSent] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
-  const confirmSignupUrl = 'http://localhost:3000';
+  const confirmSignupUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
   // 페이지 로드 시 자동으로 이메일 전송
   useEffect(() => {
