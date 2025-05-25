@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+//콜백 주소로 이동하는 페이지
 // 비밀번호 재설정 핸들러 컴포넌트
 function PasswordResetHandler() {
   const router = useRouter();
