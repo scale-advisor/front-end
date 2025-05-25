@@ -63,10 +63,8 @@ export default function Navbar() {
   if (!mounted) {
     return (
       <nav
-        className={`transition-all duration-300 py-4 ${
-          scrolled
-            ? 'bg-gray-900 sticky top-0 z-50 shadow-lg text-white'
-            : 'bg-white shadow-md'
+        className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 py-4 ${
+          scrolled ? 'bg-gray-900 shadow-lg text-white' : 'bg-white shadow-md'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -122,10 +120,8 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`transition-all duration-300 py-4 ${
-        scrolled
-          ? 'bg-gray-900 sticky top-0 z-50 shadow-lg text-white'
-          : 'bg-white shadow-md'
+      className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 py-4 ${
+        scrolled ? 'bg-gray-900 shadow-lg text-white' : 'bg-white shadow-md'
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -147,10 +143,10 @@ export default function Navbar() {
               </Link>
               {isLoggedIn && (
                 <Link
-                  href="/dashboard"
+                  href="/projects"
                   className={`border-transparent ${scrolled ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
-                  Dashboard
+                  Projects
                 </Link>
               )}
               <Link
@@ -170,11 +166,12 @@ export default function Navbar() {
           <div className="flex items-center">
             {isLoggedIn ? (
               <div className="flex items-center space-x-4">
-                <span
-                  className={`text-sm ${scrolled ? 'text-gray-300' : 'text-gray-700'}`}
+                <button
+                  onClick={() => router.push('/mypage')}
+                  className={`text-sm ${scrolled ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} cursor-pointer`}
                 >
-                  Hello, {getUserName()}
-                </span>
+                  Hello, {getUserName()}님
+                </button>
                 <button
                   onClick={handleLogout}
                   className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
