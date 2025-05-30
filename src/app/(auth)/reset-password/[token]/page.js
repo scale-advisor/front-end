@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import AuthSidebar from '@/components/AuthSidebar';
+import AuthSidebar from '@/components/layout/AuthSidebar';
 import api from '@/lib/axios';
 
 export default function NewPasswordPage() {
@@ -85,7 +85,7 @@ export default function NewPasswordPage() {
       // 백엔드 API 호출
       await api.post('/auth/password-reset', {
         token,
-        newPassword : password,
+        newPassword: password,
       });
 
       // 성공 시 상태 업데이트

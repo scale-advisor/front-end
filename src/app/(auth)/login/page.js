@@ -4,10 +4,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AuthSidebar from '@/components/AuthSidebar';
-import api from '@/lib/axios';
+import AuthSidebar from '@/components/layout/AuthSidebar';
 import useAuthStore from '@/store/useAuthStore';
-import kakaoApi from '@/lib/kakaoAxios';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,8 +18,35 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Zustand 스토어에서 login 액션 가져오기
   const login = useAuthStore((state) => state.login);
+
+  const handleBasicLoginSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await login({ email, password });
+
+      // returnUrl이 있으면 해당 URL로, 없으면 홈으로 리다이렉트
+      const searchParams = new URLSearchParams(window.location.search);
+      const returnUrl = searchParams.get('returnUrl');
+      if (returnUrl) {
+        router.push(decodeURIComponent(returnUrl));
+      } else {
+        router.push('/');
+      }
+    } catch (err) {
+      console.error('로그인 오류:', err);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   //카카오 로그인 실행 함수
   const handleKakaoLogin = async () => {
@@ -29,46 +54,10 @@ export default function LoginPage() {
       console.log('카카오 로그인 실행');
       const response = await api.get('/auth/kakao/authorize');
       const { redirectUrl } = response.data;
-      
+
       router.push(redirectUrl);
-      
     } catch (err) {
       console.error('카카오 로그인 오류:', err);
-    }
-  };
-
-  //베이직 로그인 실행 함수
-  const handleBasicLoginSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      // 백엔드 API 호출
-      const response = await api.post('/auth/login/email', {
-        email,
-        password,
-      });
-
-      // 응답에서 토큰과 사용자 정보 추출
-      const { accessToken, user } = response.data;
-
-      // Zustand 스토어에 로그인 정보 저장
-      // 참고: login 함수 내부에서 localStorage.setItem('token') 호출함
-      login(user, accessToken);
-
-      // 로그인 성공 시 홈으로 리다이렉트
-      router.push('/');
-    } catch (err) {
-      // 오류 처리
-      console.error('로그인 오류:', err);
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
-      } else {
-        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
-      }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -88,39 +77,6 @@ export default function LoginPage() {
           <h2 className="text-2xl md:text-3xl font-semibold mb-8 text-center text-gray-800">
             로그인
           </h2>
-
-          {/* 카카오 로그인 버튼 */}
-          <div className="mb-8">
-            <motion.button
-              onClick={handleKakaoLogin}
-              className="w-full flex items-center justify-center py-3 px-4 rounded-md border border-[#FEE500] bg-[#FEE500] text-gray-800 font-medium shadow-sm hover:shadow-md transition-all duration-300"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              aria-label="Kakao 로그인"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-                className="mr-2"
-              >
-                <path
-                  d="M12 3C7.0374 3 3 6.28866 3 10.3368C3 13.0289 4.7748 15.3683 7.36155 16.5384C7.16807 17.1722 6.45509 19.5369 6.3659 19.9309C6.24932 20.4999 6.59543 20.4964 6.8356 20.3519C7.01992 20.2427 9.95582 18.2364 10.8954 17.6319C11.2605 17.678 11.6266 17.7036 12 17.7036C16.9626 17.7036 21 14.4149 21 10.3368C21 6.28866 16.9626 3 12 3Z"
-                  fill="#191919"
-                />
-              </svg>
-              카카오로 로그인
-            </motion.button>
-          </div>
-
-          <div className="flex items-center justify-center mb-6 md:mb-8">
-            <div className="flex-grow h-px bg-gray-200"></div>
-            <span className="mx-4 text-sm md:text-base text-gray-500">
-              또는 이메일로 로그인
-            </span>
-            <div className="flex-grow h-px bg-gray-200"></div>
-          </div>
 
           {/* 로그인 폼 */}
           <form
@@ -235,14 +191,12 @@ export default function LoginPage() {
                 </label>
               </div>
               <div className="text-sm">
-                {' '}
                 <Link
                   href="/forgot-password"
                   className="font-medium text-blue-600 hover:text-blue-500"
                 >
-                  {' '}
-                  비밀번호 찾기{' '}
-                </Link>{' '}
+                  비밀번호 찾기
+                </Link>
               </div>
             </div>
 
@@ -280,19 +234,50 @@ export default function LoginPage() {
                 '로그인'
               )}
             </motion.button>
-
-            <p className="mt-6 text-center text-sm text-gray-600">
-              {' '}
-              계정이 없으신가요?{' '}
-              <Link
-                href="/register"
-                className="font-medium text-blue-600 hover:text-blue-500"
-              >
-                {' '}
-                회원가입{' '}
-              </Link>{' '}
-            </p>
           </form>
+
+          <div className="flex items-center justify-center my-6 md:my-8">
+            <div className="flex-grow h-px bg-gray-200"></div>
+            <span className="mx-4 text-sm md:text-base text-gray-500">
+              또는 소셜 계정으로 로그인
+            </span>
+            <div className="flex-grow h-px bg-gray-200"></div>
+          </div>
+
+          {/* 카카오 로그인 버튼 */}
+          <div className="mb-6">
+            <motion.button
+              onClick={handleKakaoLogin}
+              className="w-full flex items-center justify-center py-3 px-4 rounded-md border border-[#FEE500] bg-[#FEE500] text-gray-800 font-medium shadow-sm hover:shadow-md transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              aria-label="Kakao 로그인"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                className="mr-2"
+              >
+                <path
+                  d="M12 3C7.0374 3 3 6.28866 3 10.3368C3 13.0289 4.7748 15.3683 7.36155 16.5384C7.16807 17.1722 6.45509 19.5369 6.3659 19.9309C6.24932 20.4999 6.59543 20.4964 6.8356 20.3519C7.01992 20.2427 9.95582 18.2364 10.8954 17.6319C11.2605 17.678 11.6266 17.7036 12 17.7036C16.9626 17.7036 21 14.4149 21 10.3368C21 6.28866 16.9626 3 12 3Z"
+                  fill="#191919"
+                />
+              </svg>
+              카카오로 로그인
+            </motion.button>
+          </div>
+
+          <p className="text-center text-sm text-gray-600">
+            계정이 없으신가요?{' '}
+            <Link
+              href="/register"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              회원가입
+            </Link>
+          </p>
         </div>
       </motion.div>
     </div>
