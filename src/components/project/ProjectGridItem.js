@@ -1,8 +1,30 @@
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import useProjectStore from '@/store/useProjectStore';
 
 const ProjectGridItem = ({ project }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const router = useRouter();
+  console.log(project);
+
+  const formatDate = (dateString) => {
+    try {
+      if (!dateString) return '날짜 없음';
+
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '유효하지 않은 날짜';
+
+      return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(date);
+    } catch (error) {
+      console.error('날짜 변환 오류:', error);
+      return '날짜 변환 오류';
+    }
+  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -22,29 +44,38 @@ const ProjectGridItem = ({ project }) => {
     };
   }, [menuRef]);
 
+  const handleProjectClick = () => {
+    router.push(`/projects/${project.id}`);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
+    <div
+      className="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={handleProjectClick}
+    >
       <div className="p-6">
         <div className="flex justify-between items-start">
-          <h3 className="text-lg font-medium text-gray-900">{project.name}</h3>
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              {project.name}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">{project.description}</p>
+          </div>
           <div className="relative" ref={menuRef}>
             <button
-              onClick={toggleMenu}
-              className="text-gray-600 hover:text-gray-900 focus:outline-none"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMenu();
+              }}
+              className="text-gray-400 hover:text-gray-600"
             >
               <svg
-                xmlns="http://www.w3.org/2000/svg"
                 className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                />
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
               </svg>
             </button>
             {isMenuOpen && (
@@ -53,7 +84,8 @@ const ProjectGridItem = ({ project }) => {
                   <button
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       console.log('편집하기');
                       setIsMenuOpen(false);
                     }}
@@ -63,7 +95,8 @@ const ProjectGridItem = ({ project }) => {
                   <button
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       console.log('복제하기');
                       setIsMenuOpen(false);
                     }}
@@ -73,7 +106,8 @@ const ProjectGridItem = ({ project }) => {
                   <button
                     className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                     role="menuitem"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       console.log('삭제하기');
                       setIsMenuOpen(false);
                     }}
@@ -85,22 +119,10 @@ const ProjectGridItem = ({ project }) => {
             )}
           </div>
         </div>
-        <p className="mt-2 text-sm text-gray-500">{project.description}</p>
-        <div className="mt-4 flex items-center text-sm text-gray-500">
-          <svg
-            className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          {project.createdAt}
+        <div className="mt-4">
+          <div className="text-sm text-gray-500">
+            마지막 수정일: {formatDate(project.updatedAt)}
+          </div>
         </div>
       </div>
     </div>

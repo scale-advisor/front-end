@@ -7,7 +7,7 @@ import useProjectStore from '@/store/useProjectStore';
 import InviteModal from '@/components/modal/InviteModal';
 import TeamSkeleton from '@/components/common/TeamSkeleton';
 import { useParams } from 'next/navigation';
-import ProjectPathHeader from '@/components/project/ProjectPathNavbar';
+import ProjectPathNavbar from '@/components/project/ProjectPathNavbar';
 
 export default function TeamPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -89,7 +89,7 @@ export default function TeamPage() {
   const pendingMembers = members.filter(
     (member) => member.state !== 'ACCEPTED',
   );
-  console.log(currentUserRole);
+  console.log(currentUserRole)
   const renderMemberTable = (memberList, title, isPending = false) => (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-4">
@@ -187,7 +187,7 @@ export default function TeamPage() {
                       {getStatusText(member.state)}
                     </span>
                   </td>
-                  {currentUserRole !== 'OWNER' &&
+                  {currentUserRole === 'OWNER' &&
                   member.state === 'ACCEPTED' &&
                   member.email !== user?.email ? (
                     <td className="px-6 py-4 whitespace-nowrap text-right relative">
@@ -360,7 +360,7 @@ export default function TeamPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-8">
-        <ProjectPathHeader project={currentProject} />
+        <ProjectPathNavbar project={currentProject} />
         <div className="py-8">
           <div className="mb-6">
             <div className="flex justify-between items-center mb-6">

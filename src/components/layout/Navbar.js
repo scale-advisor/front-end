@@ -13,7 +13,7 @@ export default function Navbar() {
 
   // Zustand 스토어에서 필요한 상태와 함수 구독
   // 실시간 변경사항을 반영하기 위해 useState가 아닌 직접 구독 방식으로 변경
-  const isLoggedIn = useAuthStore((state) => state.isLoggedIn());
+  const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
