@@ -1,8 +1,8 @@
 'use client';
 
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/layout/Navbar';
 import TokenInfo from '@/components/TokenInfo';
-import Footer from '@/components/Footer';
+import Footer from '@/components/layout/Footer';
 
 export default function TokenInfoPage() {
   return (
