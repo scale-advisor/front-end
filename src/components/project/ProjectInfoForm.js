@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import LanguageSelectModal from './LanguageSelectModal';
+import LanguageSelect, { LANGUAGES } from '../common/LanguageSelect';
 
 const ProjectInfoForm = ({ onNext, initialData }) => {
   const [formData, setFormData] = useState({
@@ -21,10 +21,11 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
     });
   };
 
-  const handleLanguageChange = (selectedLanguages) => {
+  const handleLanguageChange = (serverKeys) => {
+    console.log('Selected serverKeys:', serverKeys);
     setFormData({
       ...formData,
-      language: selectedLanguages,
+      language: serverKeys,
     });
   };
 
@@ -57,6 +58,7 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log('Form data on submit:', formData);
 
     if (validate()) {
       onNext(formData);
@@ -178,11 +180,14 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
         </button>
       </div>
 
-      <LanguageSelectModal
+      <LanguageSelect
         isOpen={isLanguageModalOpen}
         onClose={() => setIsLanguageModalOpen(false)}
-        selectedLanguages={formData.language}
-        onLanguagesChange={handleLanguageChange}
+        onSubmit={(languages) => {
+          console.log('Languages received from modal:', languages);
+          handleLanguageChange(languages);
+        }}
+        initialSelectedLanguages={formData.language}
       />
     </form>
   );
