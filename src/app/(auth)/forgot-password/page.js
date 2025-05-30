@@ -12,8 +12,6 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const pwdResetRedirectUrl =
-    typeof window !== 'undefined' ? window.location.origin : '';
   // 비밀번호 찾기 요청 처리 함수
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +23,7 @@ export default function ForgotPasswordPage() {
       // 백엔드 API 호출
       await api.post('/auth/password-reset/request', {
         email,
-        pwdResetRedirectUrl,
+        pwdResetRedirectUrl : process.env.NEXT_PUBLIC_BASE_URL,
       });
 
       // 성공 시 제출 상태로 변경

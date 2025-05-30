@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useAuthStore from '@/store/useAuthStore';
-import kakaoApi from '@/lib/kakaoAxios';
+import api from '@/lib/axios';
 
 // 실제 콜백 핸들링 컴포넌트
 function KakaoCallbackHandler() {
@@ -25,7 +25,7 @@ function KakaoCallbackHandler() {
     if (isProcessing) {
       const processKakaoLogin = async () => {
         try {
-          const response = await kakaoApi.post('/auth/kakao/login', { code });
+          const response = await api.post('/auth/kakao/login', { code });
           const { accessToken, user } = response.data;
           login(user, accessToken);
           router.push('/');

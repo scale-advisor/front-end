@@ -15,74 +15,63 @@ import useAuthStore from '@/store/useAuthStore';
 export default function AuthGuard({ children, publicPaths = [] }) {
   const router = useRouter();
   const pathname = usePathname();
-
-  // 클라이언트 사이드 렌더링을 위한 상태
   const [mounted, setMounted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Zustand store에서 필요한 상태들을 가져옴
+  const { isAuthenticated, token } = useAuthStore();
 
   // 기본 공개 경로 (인증 필요 없음)
   const defaultPublicPaths = [
-    '/', // 홈 페이지
-    '/about', // 서비스 소개 페이지
-    '/token-info', // 토큰 정보 페이지
+    '/',
+    '/about',
+    '/token-info',
     '/login',
     '/register',
     '/email-verification',
     '/reset-password',
     '/auth',
     '/forgot-password',
+    '/projects/join',
   ];
 
-  // 모든 공개 경로 목록
   const allPublicPaths = [...defaultPublicPaths, ...publicPaths];
 
-  useEffect(() => {
-    // 마운트 상태 설정 및 인증 상태 확인
-    setMounted(true);
-    const authState = useAuthStore.getState();
-    setIsLoggedIn(authState.isLoggedIn());
-
-    // 인증이 필요없는 경로인지 확인
-    const isPublicPath = allPublicPaths.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
+  // 공개 경로 체크 함수
+  const isPublicPath = (path) => {
+    return allPublicPaths.some(
+      (publicPath) => path === publicPath || path.startsWith(`${publicPath}/`),
     );
+  };
 
-    // 사용자가 로그인되지 않고, 공개 경로가 아닌 경우 로그인 페이지로 리다이렉트
-    if (authState.isLoggedIn() === false && !isPublicPath) {
-      router.push('/login');
-    }
+  useEffect(() => {
+    // 컴포넌트가 마운트되면 hydration이 완료된 것으로 간주
+    setMounted(true);
+  }, []);
 
-    // 사용자가 이미 로그인되어 있고, 로그인/회원가입 페이지에 접근하려는 경우 홈으로 리다이렉트
+  useEffect(() => {
+    if (!mounted) return;
+
+    // 1. 이미 로그인된 사용자가 로그인/회원가입 페이지 접근 시
     if (
-      authState.isLoggedIn() === true &&
+      isAuthenticated &&
       (pathname === '/login' || pathname === '/register')
     ) {
-      router.push('/');
+      router.replace('/');
+      return;
     }
-  }, [pathname, router, allPublicPaths]);
 
-  // 서버 사이드 렌더링이거나 마운트 되지 않은 경우
+    // 2. 인증이 필요한 페이지 접근 시
+    if (!isPublicPath(pathname)) {
+      const localToken = localStorage.getItem('token');
+      if (!isAuthenticated && !localToken) {
+        router.push(`/login?returnUrl=${encodeURIComponent(pathname)}`);
+      }
+    }
+  }, [mounted, pathname, isAuthenticated, router]);
+
+  // hydration 전에는 아무것도 렌더링하지 않음
   if (!mounted) {
-    // 공개 경로인 경우에만 컨텐츠 표시, 그렇지 않으면 빈 페이지 표시
-    const isPublicPath = allPublicPaths.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
-    );
-
-    if (isPublicPath) {
-      return children;
-    }
-
-    // 로딩 상태 또는 빈 화면 반환
     return null;
-  }
-
-  // 인증 상태 확인 후 컨텐츠 표시
-  const isPublicPath = allPublicPaths.some(
-    (path) => pathname === path || pathname.startsWith(`${path}/`),
-  );
-
-  if (!isLoggedIn && !isPublicPath) {
-    return null; // 리다이렉트 중에는 컨텐츠를 표시하지 않음
   }
 
   return children;

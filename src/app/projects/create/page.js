@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/layout/Sidebar';
 import ProjectInfoForm from '@/components/project/ProjectInfoForm';
 import FileUploadForm from '@/components/project/FileUploadForm';
 import AnalysisForm from '@/components/project/AnalysisForm';
@@ -69,7 +69,7 @@ const CreateProjectPage = () => {
 
       <div className="flex-1 flex justify-center">
         <div className="w-full max-w-4xl px-6 pt-16">
-          <div className="mb-8">
+          <div>
             {/* 단계 표시기 */}
             <div className="bg-transparent pr-10 rounded-xl mb-6 flex justify-center">
               <div className="relative flex items-center justify-between max-w-2xl w-full">

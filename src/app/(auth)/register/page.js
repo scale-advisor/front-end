@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import Link from 'next/link';
-import AuthSidebar from '@/components/AuthSidebar';
+import AuthSidebar from '@/components/layout/AuthSidebar';
 
 export default function RegisterPage() {
   const router = useRouter();
