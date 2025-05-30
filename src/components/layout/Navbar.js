@@ -10,10 +10,10 @@ export default function Navbar() {
 
   // 클라이언트 사이드 렌더링을 위한 상태들
   const [mounted, setMounted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Zustand 스토어에서 필요한 상태와 함수 구독
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  // 실시간 변경사항을 반영하기 위해 useState가 아닌 직접 구독 방식으로 변경
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn());
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
@@ -46,17 +46,9 @@ export default function Navbar() {
   }, []);
 
   // 로그아웃 핸들러
-  const handleLogout = async () => {
-    try {
-      setIsLoading(true);
-      await logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('로그아웃 중 오류:', error);
-      router.push('/login');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
   };
 
   // 사용자 이름을 가져오는 함수 (안전하게 처리)
@@ -149,7 +141,7 @@ export default function Navbar() {
               >
                 Home
               </Link>
-              {isAuthenticated && (
+              {isLoggedIn && (
                 <Link
                   href="/projects"
                   className={`border-transparent ${scrolled ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
@@ -172,56 +164,23 @@ export default function Navbar() {
             </div>
           </div>
           <div className="flex items-center">
-            {isAuthenticated ? (
+            {isLoggedIn ? (
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => router.push('/mypage')}
-                  className={`text-sm ${
-                    scrolled
-                      ? 'text-gray-300 hover:text-white'
-                      : 'text-gray-700 hover:text-gray-900'
-                  } cursor-pointer`}
+                  className={`text-sm ${scrolled ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} cursor-pointer`}
                 >
                   Hello, {getUserName()}님
                 </button>
                 <button
                   onClick={handleLogout}
-                  disabled={isLoading}
                   className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
                     scrolled
                       ? 'bg-blue-500 hover:bg-blue-600'
                       : 'bg-blue-600 hover:bg-blue-700'
-                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-                    isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                 >
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      로그아웃 중...
-                    </div>
-                  ) : (
-                    '로그아웃'
-                  )}
+                  Logout
                 </button>
               </div>
             ) : (

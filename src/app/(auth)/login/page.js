@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AuthSidebar from '@/components/AuthSidebar';
+import AuthSidebar from '@/components/layout/AuthSidebar';
 import api from '@/lib/axios';
 import useAuthStore from '@/store/useAuthStore';
 import kakaoApi from '@/lib/kakaoAxios';
@@ -29,9 +29,8 @@ export default function LoginPage() {
       console.log('카카오 로그인 실행');
       const response = await api.get('/auth/kakao/authorize');
       const { redirectUrl } = response.data;
-      
+
       router.push(redirectUrl);
-      
     } catch (err) {
       console.error('카카오 로그인 오류:', err);
     }

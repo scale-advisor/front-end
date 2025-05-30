@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Sidebar from '@/components/Sidebar';
-import CreateProjectButton from '@/components/CreateProjectButton';
+import Sidebar from '@/components/layout/Sidebar';
+import CreateProjectButton from '@/components/common/CreateProjectButton';
 import ProjectGridItem from '@/components/project/ProjectGridItem';
 import ProjectListItem from '@/components/project/ProjectListItem';
 import api from '@/lib/axios';
@@ -19,8 +19,8 @@ export default function ProjectsPage() {
     const fetchProjects = async () => {
       try {
         const response = await api.get('/projects');
-        const fetchedProjects = response.data.responseData.projects
-      
+        const fetchedProjects = response.data.responseData.projects;
+
         setProjects(fetchedProjects);
         setIsLoading(false);
       } catch (error) {
@@ -31,7 +31,6 @@ export default function ProjectsPage() {
 
     fetchProjects();
   }, []);
-
 
   // 스켈레톤 로딩 UI 렌더링
   const renderSkeletonUI = () => {

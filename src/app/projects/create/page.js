@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/layout/Sidebar';
 import ProjectInfoForm from '@/components/project/ProjectInfoForm';
 import FileUploadForm from '@/components/project/FileUploadForm';
 import AnalysisForm from '@/components/project/AnalysisForm';

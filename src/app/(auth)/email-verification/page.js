@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import api from '@/lib/axios';
-import AuthSidebar from '@/components/AuthSidebar';
+import AuthSidebar from '@/components/layout/AuthSidebar';
 
 // useSearchParams를 사용하는 컴포넌트를 분리
 function EmailVerificationContent() {
@@ -17,7 +17,8 @@ function EmailVerificationContent() {
   const [initialSent, setInitialSent] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
-  const confirmSignupUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const confirmSignupUrl =
+    typeof window !== 'undefined' ? window.location.origin : '';
 
   // 페이지 로드 시 자동으로 이메일 전송
   useEffect(() => {
