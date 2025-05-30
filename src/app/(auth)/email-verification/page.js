@@ -17,6 +17,8 @@ function EmailVerificationContent() {
   const [initialSent, setInitialSent] = useState(false);
   const [cooldown, setCooldown] = useState(false);
   const [remainingTime, setRemainingTime] = useState(0);
+  const confirmSignupUrl =
+    typeof window !== 'undefined' ? window.location.origin : '';
 
   // 페이지 로드 시 자동으로 이메일 전송
   useEffect(() => {
@@ -28,7 +30,7 @@ function EmailVerificationContent() {
         // 초기 이메일 전송 API 호출 (isResending 상태 변경 없음)
         await api.post('/auth/email-verification/request', {
           email,
-          confirmSignupUrl: process.env.NEXT_PUBLIC_BASE_URL,
+          confirmSignupUrl,
         });
 
         setInitialSent(true);
@@ -43,7 +45,7 @@ function EmailVerificationContent() {
     };
 
     sendInitialEmail();
-  }, [email, initialSent]);
+  }, [email, initialSent, confirmSignupUrl]);
 
   // 쿨다운 타이머
   useEffect(() => {

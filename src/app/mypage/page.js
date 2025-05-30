@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/layout/Sidebar';
 import useAuthStore from '@/store/useAuthStore';
 import api from '@/lib/axios';
-import DeleteAccountModal from '@/components/DeleteAccountModal';
+import DeleteAccountModal from '@/components/modal/DeleteAccountModal';
 
 export default function MyPage() {
   const router = useRouter();
