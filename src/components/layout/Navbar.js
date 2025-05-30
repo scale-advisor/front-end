@@ -155,12 +155,6 @@ export default function Navbar() {
               >
                 About
               </Link>
-              <Link
-                href="/token-info"
-                className={`border-transparent ${scrolled ? 'text-gray-300 hover:text-white' : 'text-gray-500 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-              >
-                Token Info
-              </Link>
             </div>
           </div>
           <div className="flex items-center">

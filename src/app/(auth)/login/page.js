@@ -43,21 +43,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // 백엔드 API 호출
-      const response = await api.post('/auth/login/email', {
-        email,
-        password,
-      });
+      // AuthStore의 login 함수 사용
+      const { success, data } = await login({ email, password });
 
-      // 응답에서 토큰과 사용자 정보 추출
-      const { accessToken, user } = response.data;
-
-      // Zustand 스토어에 로그인 정보 저장
-      // 참고: login 함수 내부에서 localStorage.setItem('token') 호출함
-      login(user, accessToken);
-
-      // 로그인 성공 시 홈으로 리다이렉트
-      router.push('/');
+      if (success) {
+        // 로그인 성공 시 홈으로 리다이렉트
+        router.push('/');
+      }
     } catch (err) {
       // 오류 처리
       console.error('로그인 오류:', err);
