@@ -1,5 +1,6 @@
 import axios from 'axios';
 import useAuthStore from '@/store/useAuthStore';
+import { useRouter } from 'next/navigation';
 
 // 메인 API 인스턴스
 const api = axios.create({
@@ -9,6 +10,14 @@ const api = axios.create({
   },
   withCredentials: true, // 쿠키 포함
 });
+
+// 라우터 인스턴스를 저장할 변수
+let router;
+
+// 라우터 설정 함수
+export const setRouter = (nextRouter) => {
+  router = nextRouter;
+};
 
 // 요청 인터셉터: 토큰이 있으면 Authorization 헤더에 추가
 api.interceptors.request.use(
@@ -33,14 +42,25 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// 응답 인터셉터: 401 에러 시 토큰 갱신 후 요청 재시도
+// 응답 인터셉터: 401/403 에러 처리
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const status = error.response?.status;
 
-    // 401 에러이고 재시도하지 않은 요청인 경우
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 401 에러: 리프레시 토큰 만료, 재로그인 필요
+    if (status === 401) {
+      const authStore = useAuthStore.getState();
+      await authStore.logout();
+      if (router) {
+        router.push('/login');
+      }
+      return Promise.reject(error);
+    }
+
+    // 403 에러: 액세스 토큰 만료, 리프레시 토큰으로 재발급 시도
+    if (status === 403 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
@@ -56,6 +76,9 @@ api.interceptors.response.use(
         // 토큰 갱신 실패 시 로그아웃 처리
         const authStore = useAuthStore.getState();
         await authStore.logout();
+        if (router) {
+          router.push('/login');
+        }
         return Promise.reject(refreshError);
       }
     }
