@@ -54,8 +54,8 @@ const useAuthStore = create(
 
           // 응답에서 토큰과 사용자 정보 추출
           const { accessToken, name, email } = response.data;
-          
-          
+
+          console.log(response.data);
           // Zustand 스토어에 로그인 정보 저장
           get().setAuthState(accessToken, name, email);
 

@@ -29,11 +29,10 @@ function KakaoCallbackHandler() {
         try {
           // AuthStore의 kakaoLogin 함수 사용
           const { success, data, error } = await kakaoLogin(code);
-
           if (success && data) {
-            const { accessToken, user } = data;
+            const { accessToken, name, email } = data;
             // AuthStore의 상태 업데이트
-            setAuthState(accessToken, user);
+            setAuthState(accessToken, name, email);
             router.push('/');
           } else {
             throw new Error(error || '카카오 로그인에 실패했습니다.');

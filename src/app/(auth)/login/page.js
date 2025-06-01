@@ -25,10 +25,8 @@ export default function LoginPage() {
   //카카오 로그인 실행 함수
   const handleKakaoLogin = async () => {
     try {
-      console.log('카카오 로그인 실행');
       const response = await api.get('/auth/kakao/authorize');
       const { redirectUrl } = response.data;
-
       router.push(redirectUrl);
     } catch (err) {
       console.error('카카오 로그인 오류:', err);
@@ -43,7 +41,7 @@ export default function LoginPage() {
 
     try {
       // AuthStore의 login 함수 사용
-      const { success, data } = await login({ email, password });
+      const { success } = await login({ email, password });
 
       if (success) {
         // 로그인 성공 시 홈으로 리다이렉트
