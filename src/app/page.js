@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import DocumentAnimation from '@/components/common/DocumentAnimation';
 
 export default function Home() {
   return (
@@ -44,14 +45,7 @@ export default function Home() {
               </div>
               <div className="w-full lg:w-1/2 flex justify-center">
                 <div className="relative w-full max-w-lg">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg blur opacity-20"></div>
-                  <Image
-                    src="/images/dashboard.png"
-                    alt="Scale Advisor Dashboard"
-                    width={500}
-                    height={300}
-                    className="relative rounded-lg shadow-xl"
-                  />
+                  <DocumentAnimation />
                 </div>
               </div>
             </div>

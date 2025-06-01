@@ -16,7 +16,7 @@ export default function Navbar() {
   const isLoggedIn = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-
+  
   // 스크롤 상태를 관리하는 state
   const [scrolled, setScrolled] = useState(false);
 
@@ -49,14 +49,6 @@ export default function Navbar() {
   const handleLogout = () => {
     logout();
     router.push('/login');
-  };
-
-  // 사용자 이름을 가져오는 함수 (안전하게 처리)
-  const getUserName = () => {
-    if (!user) return 'User';
-    console.log(user);
-    // name이 있으면 name 사용, 없으면 email 사용, 둘 다 없으면 'User' 사용
-    return user.name || user.email || 'User';
   };
 
   // 서버 사이드 렌더링 시 최소한의 UI만 표시
@@ -164,7 +156,7 @@ export default function Navbar() {
                   onClick={() => router.push('/mypage')}
                   className={`text-sm ${scrolled ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'} cursor-pointer`}
                 >
-                  Hello, {getUserName()}님
+                  Hello, {user}님
                 </button>
                 <button
                   onClick={handleLogout}

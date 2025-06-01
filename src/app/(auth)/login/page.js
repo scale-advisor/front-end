@@ -7,7 +7,6 @@ import Link from 'next/link';
 import AuthSidebar from '@/components/layout/AuthSidebar';
 import api from '@/lib/axios';
 import useAuthStore from '@/store/useAuthStore';
-import kakaoApi from '@/lib/kakaoAxios';
 
 export default function LoginPage() {
   const router = useRouter();

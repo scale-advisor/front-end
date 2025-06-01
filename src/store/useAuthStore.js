@@ -17,8 +17,9 @@ const useAuthStore = create(
   persist(
     (set, get) => ({
       // 기본 상태
-      user: null,
+      name: null,
       token: null,
+      email: null,
       isAuthenticated: false,
 
       // 토큰 관리 (단일 진실 공급원)
@@ -42,7 +43,7 @@ const useAuthStore = create(
         }
       },
 
-      // 로그인
+      // 이메일 로그인
       login: async (credentials) => {
         try {
           // 백엔드 API 호출
@@ -52,14 +53,34 @@ const useAuthStore = create(
           });
 
           // 응답에서 토큰과 사용자 정보 추출
-          const { accessToken } = response.data;
-          const user = credentials.email;
+          const { accessToken, name, email } = response.data;
+          
+          
+          // Zustand 스토어에 로그인 정보 저장
+          get().setAuthState(accessToken, name, email);
+
+          return { success: true, data: response.data };
+        } catch (err) {
+          console.error('로그인 오류:', err);
+          throw err;
+        }
+      },
+
+      // 카카오 로그인
+      kakaoLogin: async (code) => {
+        try {
+          // 백엔드 API 호출
+          const response = await api.post('/auth/kakao/login', { code });
+          console.log(response.data);
+          // 응답에서 토큰과 사용자 정보 추출
+          const { accessToken, user } = response.data;
+
           // Zustand 스토어에 로그인 정보 저장
           get().setAuthState(accessToken, user);
 
           return { success: true, data: response.data };
         } catch (err) {
-          console.error('로그인 오류:', err);
+          console.error('카카오 로그인 오류:', err);
           throw err;
         }
       },
