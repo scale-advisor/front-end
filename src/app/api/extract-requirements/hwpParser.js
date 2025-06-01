@@ -209,6 +209,16 @@ function parseRequirements(xmlContent) {
     if (isRequirementTable(tables[i])) {
       const requirementInfo = extractTableInfo(tables[i]);
 
+      // "(계속)" 텍스트 제거
+      if (requirementInfo.requirementNumber) {
+        requirementInfo.requirementNumber = requirementInfo.requirementNumber
+          .replace(/\(계속\)/g, '') // "(계속)" 제거
+          .replace(/［계속］/g, '') // "［계속］" 제거 (전각 괄호)
+          .replace(/\[계속\]/g, '') // "[계속]" 제거 (반각 괄호)
+          .replace(/\s+/g, '') // 남은 공백 제거
+          .trim(); // 앞뒤 공백 제거
+      }
+
       // 모든 필드가 비어있지 않은 경우에만 추가
       if (
         requirementInfo.requirementNumber &&
