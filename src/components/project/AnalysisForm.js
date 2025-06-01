@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import * as XLSX from 'xlsx';
+import { downloadRequirementsExcel } from '@/utils/excelUtils';
 
 // 요구사항 분류 카테고리
 const REQUIREMENT_CATEGORIES = [
@@ -21,6 +22,9 @@ const AnalysisForm = ({ onPrevious, projectData }) => {
   const [extractedPrefixes, setExtractedPrefixes] = useState([]);
   const [categoryMappings, setCategoryMappings] = useState({});
   const [requirementObjects, setRequirementObjects] = useState([]);
+  const [analysisStatus, setAnalysisStatus] = useState('IDLE');
+  const [analysisStep, setAnalysisStep] = useState(0);
+  const [progressPercent, setProgressPercent] = useState(0);
   const itemsPerPage = 4;
 
   const CATEGORY_SERVER_KEYS = {
@@ -30,6 +34,159 @@ const AnalysisForm = ({ onPrevious, projectData }) => {
     '운영환경 호환성': 'OPERATIONAL_COMPATIBILITY',
     '보안성 요구수준': 'SECURITY',
   };
+
+  const analysisPhrases = [
+    {
+      text: '전문가가 제안요청서를 검토하고 있습니다',
+      icon: (
+        <svg
+          className="w-16 h-16 text-blue-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+          />
+        </svg>
+      ),
+    },
+    {
+      text: '요구사항을 추출하고 있습니다',
+      icon: (
+        <svg
+          className="w-16 h-16 text-green-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+          />
+        </svg>
+      ),
+    },
+    {
+      text: '요구사항을 분류하고 있습니다',
+      icon: (
+        <svg
+          className="w-16 h-16 text-indigo-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+          />
+        </svg>
+      ),
+    },
+    {
+      text: '복잡도를 분석하고 있습니다',
+      icon: (
+        <svg
+          className="w-16 h-16 text-yellow-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+      ),
+    },
+    {
+      text: '개발 공수를 산정하고 있습니다',
+      icon: (
+        <svg
+          className="w-16 h-16 text-red-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+    },
+    {
+      text: 'AI가 최종적으로 검토하고 있습니다',
+      icon: (
+        <svg
+          className="w-16 h-16 text-purple-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+    },
+  ];
+
+  useEffect(() => {
+    let interval;
+    let messageInterval;
+
+    if (analysisStatus === 'RUNNING') {
+      // 프로그레스 바 업데이트를 위한 간격 설정
+      const duration = 15000; // 전체 진행 시간 (15초)
+      const steps = 100; // 프로그레스 바 업데이트 단계
+      const stepTime = duration / steps;
+      const maxProgress = 90; // 최대 진행률을 90%로 제한
+
+      interval = setInterval(() => {
+        setProgressPercent((prev) => {
+          if (prev >= maxProgress) {
+            clearInterval(interval);
+            return maxProgress;
+          }
+          return prev + maxProgress / steps;
+        });
+      }, stepTime);
+
+      // 메시지 변경을 위한 간격 설정
+      messageInterval = setInterval(() => {
+        setAnalysisStep((prev) => {
+          if (prev >= analysisPhrases.length - 1) {
+            clearInterval(messageInterval);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 2500);
+
+      return () => {
+        clearInterval(interval);
+        clearInterval(messageInterval);
+      };
+    } else if (analysisStatus === 'SUCCESS') {
+      // 성공 시 프로그레스 바를 100%로 설정
+      setProgressPercent(100);
+    }
+  }, [analysisStatus]);
 
   const handleStartAnalysis = async () => {
     if (!projectData.file) {
@@ -90,6 +247,7 @@ const AnalysisForm = ({ onPrevious, projectData }) => {
   };
 
   const handleCreateProject = async () => {
+    let projectId = null;
     try {
       // 프로젝트 생성
       const projectResponse = await api.post('/projects', {
@@ -101,85 +259,140 @@ const AnalysisForm = ({ onPrevious, projectData }) => {
       console.log('requirementObjects', requirementObjects);
       console.log('프로젝트 생성 응답:', projectResponse);
 
-      const projectId = projectResponse.data.responseData.id;
+      projectId = projectResponse.data.responseData.id;
       console.log('생성된 프로젝트 ID:', projectId);
       console.log('언어:', projectData.language);
 
-      // 프로젝트 옵션 설정
-      await api.post(`/projects/${projectId}/options`, {
-        unitCost: parseInt(projectData.budget.replace(/[^0-9]/g, '')),
-        teamSize: parseInt(projectData.teamSize),
-        cocomoType: 'ORGANIC',
-        languageList: projectData.language,
-      });
+      try {
+        // 프로젝트 옵션 설정
+        await api.post(`/projects/${projectId}/options`, {
+          unitCost: parseInt(projectData.budget.replace(/[^0-9]/g, '')),
+          teamSize: parseInt(projectData.teamSize),
+          cocomoType: 'ORGANIC',
+          languageList: projectData.language,
+        });
 
-      console.log('프로젝트 옵션 설정 완료');
+        console.log('프로젝트 옵션 설정 완료');
 
-      // 파일 업로드
-      const formData = new FormData();
-      formData.append('file', projectData.file);
+        // 파일 업로드
+        const formData = new FormData();
+        formData.append('file', projectData.file);
 
-      const fileExtension = projectData.file.name
-        .split('.')
-        .pop()
-        .toLowerCase();
-      const fileType = fileExtension === 'hwpx' ? 'RFP' : 'REQUIREMENTS';
+        const fileExtension = projectData.file.name
+          .split('.')
+          .pop()
+          .toLowerCase();
+        const fileType = fileExtension === 'hwpx' ? 'RFP' : 'REQUIREMENTS';
 
-      const queryParams = new URLSearchParams({
-        name: projectData.file.name,
-        type: fileType,
-      }).toString();
+        const queryParams = new URLSearchParams({
+          name: projectData.file.name,
+          type: fileType,
+        }).toString();
 
-      await api.post(`/projects/${projectId}/files?${queryParams}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+        await api.post(
+          `/projects/${projectId}/files?${queryParams}`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        );
 
-      console.log('파일 업로드 완료');
+        console.log('파일 업로드 완료');
 
-      // 요구사항 카테고리 설정
-      await api.post(
-        `/projects/${projectId}/requirements/categories`,
-        requirementObjects,
-      );
-      console.log('요구사항 카테고리 설정 완료');
+        // 요구사항 카테고리 설정
+        await api.post(
+          `/projects/${projectId}/requirements/categories`,
+          requirementObjects,
+        );
+        console.log('요구사항 카테고리 설정 완료');
 
-      // 요구사항 데이터 전송
-      console.log('전송할 요구사항 데이터:', analysisResult.requirements);
+        // 요구사항 데이터 전송
+        console.log('전송할 요구사항 데이터:', analysisResult.requirements);
 
-      await api.post(
-        `/projects/${projectId}/requirements`,
-        analysisResult.requirements,
-      );
+        await api.post(
+          `/projects/${projectId}/requirements`,
+          analysisResult.requirements,
+        );
 
-      router.push('/projects');
+        // 분석 작업 시작
+        const analysisResponse = await api.post(
+          `/projects/${projectId}/analysis?versionNumber=1.0`,
+        );
+        console.log(analysisResponse);
+        const jobId = analysisResponse.data.jobId;
+        console.log('jobId', jobId);
+
+        // 분석 상태 모니터링 시작
+        setAnalysisStatus('RUNNING');
+
+        const checkAnalysisStatus = async () => {
+          try {
+            const statusResponse = await api.get(
+              `/projects/${projectId}/analysis/projects/${projectId}/analysis/jobs/${jobId}`,
+            );
+            const status = statusResponse.data.status;
+
+            if (status === 'RUNNING') {
+              console.log('분석 진행중');
+              setTimeout(checkAnalysisStatus, 1000);
+            } else if (status === 'SUCCESS') {
+              setAnalysisStatus('SUCCESS');
+              setTimeout(() => {
+                router.push(`/projects/${projectId}`);
+              }, 3000);
+            } else if (status === 'FAILED') {
+              setAnalysisStatus('FAILED');
+              setError('분석 작업이 실패했습니다. 다시 시도해주세요.');
+              // 분석 실패 시 프로젝트 삭제
+              await api.delete(`/projects/${projectId}`);
+            }
+          } catch (error) {
+            setAnalysisStatus('FAILED');
+            setError(
+              '분석 상태 확인 중 오류가 발생했습니다. 다시 시도해주세요.',
+            );
+            // 에러 발생 시 프로젝트 삭제
+            if (projectId) {
+              await api.delete(`/projects/${projectId}`);
+            }
+          }
+        };
+
+        // 상태 체크 시작
+        checkAnalysisStatus();
+      } catch (error) {
+        console.error('프로젝트 설정 오류:', error);
+        setError(error.message || '프로젝트 설정 중 오류가 발생했습니다.');
+        // 설정 단계 실패 시 프로젝트 삭제
+        if (projectId) {
+          await api.delete(`/projects/${projectId}`);
+        }
+        throw error;
+      }
     } catch (error) {
       console.error('프로젝트 생성 오류:', error);
       setError(error.message || '프로젝트 생성 중 오류가 발생했습니다.');
+      // 최상위 에러 발생 시에도 프로젝트가 생성되어 있다면 삭제
+      if (projectId) {
+        await api.delete(`/projects/${projectId}`);
+      }
     }
   };
 
   const handleDownloadExcel = () => {
-    if (!analysisResult?.requirements) return;
+    if (!analysisResult?.requirements) {
+      setError('다운로드할 요구사항 데이터가 없습니다.');
+      return;
+    }
 
-    // hwpParser의 generateExcelData 함수를 사용하여 데이터 생성
-    const { headers, rows } = generateExcelData(analysisResult.requirements);
-
-    // 워크북 생성
-    const workbook = XLSX.utils.book_new();
-
-    // 워크시트 생성 및 헤더 설정
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-
-    // 열 너비 설정
-    worksheet['!cols'] = headers.map((h) => ({ wch: h.width }));
-
-    // 워크북에 워크시트 추가
-    XLSX.utils.book_append_sheet(workbook, worksheet, '요구사항 목록');
-
-    // 파일 다운로드
-    XLSX.writeFile(workbook, '요구사항_분석결과.xlsx');
+    try {
+      downloadRequirementsExcel(analysisResult.requirements);
+    } catch (error) {
+      console.error('엑셀 다운로드 오류:', error);
+      setError(error.message || '엑셀 파일 생성 중 오류가 발생했습니다.');
+    }
   };
 
   // 현재 페이지의 요구사항 목록 계산
@@ -479,6 +692,58 @@ const AnalysisForm = ({ onPrevious, projectData }) => {
           </div>
         )}
 
+        {/* 프로젝트 분석 상태 */}
+        {(analysisStatus === 'RUNNING' || analysisStatus === 'SUCCESS') && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white p-8 rounded-lg shadow-xl text-center max-w-lg w-full mx-4">
+              {analysisStatus === 'RUNNING' ? (
+                <div className="space-y-6">
+                  <div className="flex justify-center">
+                    {analysisPhrases[analysisStep].icon}
+                  </div>
+                  <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-blue-500 transition-all duration-300 ease-linear"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="min-h-[3rem]">
+                    <p className="text-lg font-medium text-gray-900 animate-fade-in">
+                      {analysisPhrases[analysisStep].text}
+                    </p>
+                    <p className="mt-2 text-sm text-gray-500">
+                      잠시만 기다려주세요
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <svg
+                    className="h-12 w-12 text-green-500 mx-auto"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <p className="mt-4 text-lg font-medium text-gray-900">
+                    분석이 완료되었습니다!
+                  </p>
+                  <p className="mt-2 text-sm text-gray-500">
+                    잠시 후 분석 대시보드로 이동합니다...
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 분석 결과 */}
         {analysisResult && (
           <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -490,9 +755,6 @@ const AnalysisForm = ({ onPrevious, projectData }) => {
               <div className="bg-blue-50 p-4 rounded-lg">
                 <h4 className="text-sm font-medium text-gray-700 mb-3">
                   요구사항 분류 매핑
-                  <span className="text-sm text-gray-500 ml-2">
-                    (모든 접두사는 최소 하나의 분류에 매핑되어야 합니다)
-                  </span>
                 </h4>
                 {getUnmappedPrefixes().length > 0 && (
                   <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -507,9 +769,32 @@ const AnalysisForm = ({ onPrevious, projectData }) => {
                       key={category}
                       className="border-b border-gray-200 pb-4"
                     >
-                      <p className="font-medium text-gray-700 mb-2">
+                      <p className="font-medium text-gray-700 mb-2 flex items-center">
                         {category}
+                        {category === '기능' && (
+                          <span className="ml-2 text-red-500 text-sm font-normal flex items-center">
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            필수
+                          </span>
+                        )}
                       </p>
+                      {category === '기능' &&
+                        !categoryMappings[category]?.length && (
+                          <div className="mb-2 text-sm text-red-500">
+                            기능 분류에는 최소 하나 이상의 접두사가 매핑되어야
+                            합니다.
+                          </div>
+                        )}
                       <div className="flex flex-wrap gap-2">
                         {extractedPrefixes.map((prefix) => (
                           <button
@@ -519,7 +804,9 @@ const AnalysisForm = ({ onPrevious, projectData }) => {
                             }
                             className={`px-3 py-1 rounded-full text-sm ${
                               categoryMappings[category]?.includes(prefix)
-                                ? 'bg-blue-100 text-blue-800 border-2 border-blue-500'
+                                ? category === '기능'
+                                  ? 'bg-red-100 text-red-800 border-2 border-red-500'
+                                  : 'bg-blue-100 text-blue-800 border-2 border-blue-500'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                           >
