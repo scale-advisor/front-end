@@ -15,6 +15,31 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // 개발 단가와 예상 투입 인력은 숫자만 입력 가능
+    if (name === 'budget' || name === 'teamSize') {
+      // 숫자가 아닌 문자 제거
+      const numericValue = value.replace(/[^0-9]/g, '');
+
+      // 개발 단가의 경우 천 단위 콤마 추가
+      if (name === 'budget') {
+        const formattedValue = numericValue
+          ? Number(numericValue).toLocaleString()
+          : '';
+        setFormData({
+          ...formData,
+          [name]: formattedValue,
+        });
+        return;
+      }
+
+      setFormData({
+        ...formData,
+        [name]: numericValue,
+      });
+      return;
+    }
+
     setFormData({
       ...formData,
       [name]: value,
@@ -38,6 +63,8 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
 
     if (!formData.budget.trim()) {
       newErrors.budget = '개발 단가를 입력해주세요';
+    } else if (!/^\d{1,3}(,\d{3})*$/.test(formData.budget)) {
+      newErrors.budget = '올바른 형식의 개발 단가를 입력해주세요';
     }
 
     if (formData.language.length === 0) {
@@ -46,6 +73,10 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
 
     if (!formData.teamSize.trim()) {
       newErrors.teamSize = '예상 투입 인력을 입력해주세요';
+    } else if (!/^\d+$/.test(formData.teamSize)) {
+      newErrors.teamSize = '숫자만 입력해주세요';
+    } else if (parseInt(formData.teamSize) <= 0) {
+      newErrors.teamSize = '1명 이상 입력해주세요';
     }
 
     if (!formData.description.trim()) {
@@ -117,7 +148,7 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {renderFormField('프로젝트 명', 'name', '프로젝트 명을 입력하세요')}
-      {renderFormField('개발 단가', 'budget', '예: 300,000원', 'text', true)}
+      {renderFormField('개발 단가', 'budget', '예: 300,000', 'text', true)}
 
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">

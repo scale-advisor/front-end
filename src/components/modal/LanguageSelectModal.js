@@ -1,46 +1,5 @@
 import React, { useState } from 'react';
-
-const LANGUAGES = [
-  { name: 'ABAP (SAP)', category: '*' },
-  { name: 'ASP', category: '*' },
-  { name: 'Assembler', category: '*' },
-  { name: 'Brio', category: '+' },
-  { name: 'C', category: '*' },
-  { name: 'C++', category: '*' },
-  { name: 'C#', category: '*' },
-  { name: 'COBOL', category: '*' },
-  { name: 'Cognos Impromptu Scripts', category: '+' },
-  { name: 'Cross System Products (CSP)', category: '+' },
-  { name: 'Cool:Gen/IEF', category: '*' },
-  { name: 'Datastage', category: '' },
-  { name: 'Excel', category: '*' },
-  { name: 'Focus', category: '*' },
-  { name: 'FoxPro', category: '' },
-  { name: 'HTML', category: '*' },
-  { name: 'J2EE', category: '*' },
-  { name: 'Java', category: '*' },
-  { name: 'JavaScript', category: '*' },
-  { name: 'JCL', category: '*' },
-  { name: 'LINC II', category: '' },
-  { name: 'Lotus Notes', category: '*' },
-  { name: 'Natural', category: '*' },
-  { name: '.NET', category: '*' },
-  { name: 'Oracle', category: '*' },
-  { name: 'PACBASE', category: '*' },
-  { name: 'Perl', category: '*' },
-  { name: 'PL/I', category: '*' },
-  { name: 'PL/SQL', category: '*' },
-  { name: 'Powerbuilder', category: '*' },
-  { name: 'REXX', category: '*' },
-  { name: 'Sabretalk', category: '*' },
-  { name: 'SAS', category: '*' },
-  { name: 'Siebel', category: '*' },
-  { name: 'SLOGAN', category: '*' },
-  { name: 'SQL', category: '*' },
-  { name: 'VB.NET', category: '*' },
-  { name: 'Visual Basic', category: '*' },
-  { name: 'Python', category: '*' },
-].sort((a, b) => a.name.localeCompare(b.name));
+import { LANGUAGES } from '@/constants/languages';
 
 const LanguageSelectModal = ({
   isOpen,
@@ -64,6 +23,29 @@ const LanguageSelectModal = ({
 
   const handleRemoveLanguage = (language) => {
     onLanguagesChange(selectedLanguages.filter((lang) => lang !== language));
+  };
+
+  const calculateTotalLOC = (selectedLanguages, languageRates, totalFP) => {
+    // 고급 설정 모드인지 확인 (비율이 하나라도 입력되어 있으면 고급 설정)
+    const isAdvancedMode = Object.values(languageRates).some(
+      (rate) => rate > 0,
+    );
+
+    if (isAdvancedMode) {
+      // 고급 설정: 입력된 비율에 따라 LOC 계산
+      return selectedLanguages.reduce((total, langName) => {
+        const language = LANGUAGES.find((l) => l.name === langName);
+        const rate = languageRates[langName] || 0;
+        return total + totalFP * (rate / 100) * language.loc;
+      }, 0);
+    } else {
+      // 일반 설정: 균등하게 분배
+      const equalRate = 1 / selectedLanguages.length;
+      return selectedLanguages.reduce((total, langName) => {
+        const language = LANGUAGES.find((l) => l.name === langName);
+        return total + totalFP * equalRate * language.loc;
+      }, 0);
+    }
   };
 
   if (!isOpen) return null;
