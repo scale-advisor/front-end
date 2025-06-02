@@ -13,6 +13,8 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid'); // 'grid'를 기본 보기 모드로 설정
+  const [sortOrder, setSortOrder] = useState('newest'); // 'newest' 또는 'oldest'
+  const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -20,8 +22,14 @@ export default function ProjectsPage() {
       try {
         const response = await api.get('/projects');
         const fetchedProjects = response.data.responseData.projects;
+        console.log(response.data.responseData);
 
-        setProjects(fetchedProjects);
+        // 최신순으로 정렬
+        const sortedProjects = [...fetchedProjects].sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt),
+        );
+
+        setProjects(sortedProjects);
         setIsLoading(false);
       } catch (error) {
         console.error('프로젝트 데이터를 불러오는데 실패했습니다:', error);
@@ -31,6 +39,22 @@ export default function ProjectsPage() {
 
     fetchProjects();
   }, []);
+
+  // 프로젝트 정렬 함수
+  const sortProjects = (order) => {
+    const sortedProjects = [...projects].sort((a, b) => {
+      const dateA = new Date(a.updatedAt);
+      const dateB = new Date(b.updatedAt);
+      return order === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+    setProjects(sortedProjects);
+    setSortOrder(order);
+  };
+
+  // 프로젝트 검색 및 필터링
+  const filteredProjects = projects.filter((project) =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   // 스켈레톤 로딩 UI 렌더링
   const renderSkeletonUI = () => {
@@ -163,7 +187,7 @@ export default function ProjectsPage() {
             </div>
           </div>
 
-          {/* 검색 */}
+          {/* 검색 및 정렬 */}
           <div className="bg-white p-4 rounded-lg shadow mb-6">
             <div className="flex flex-col md:flex-row md:items-center md:space-x-4">
               <div className="relative flex-1">
@@ -184,9 +208,21 @@ export default function ProjectsPage() {
                 </div>
                 <input
                   type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="프로젝트 검색..."
                   className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+              <div className="mt-4 md:mt-0">
+                <select
+                  value={sortOrder}
+                  onChange={(e) => sortProjects(e.target.value)}
+                  className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+                >
+                  <option value="newest">최신순</option>
+                  <option value="oldest">오래된순</option>
+                </select>
               </div>
             </div>
           </div>
@@ -194,8 +230,8 @@ export default function ProjectsPage() {
           {isLoading ? (
             // 스켈레톤 UI 표시
             renderSkeletonUI()
-          ) : projects.length === 0 ? (
-            // 프로젝트가 없을 때 보여줄 빈 상태 UI
+          ) : filteredProjects.length === 0 ? (
+            // 검색 결과가 없거나 프로젝트가 없을 때 보여줄 빈 상태 UI
             <div className="text-center py-12 bg-white rounded-lg shadow">
               <svg
                 className="mx-auto h-24 w-24 text-gray-400"
@@ -212,31 +248,35 @@ export default function ProjectsPage() {
                 />
               </svg>
               <h3 className="mt-4 text-lg font-medium text-gray-900">
-                프로젝트가 없습니다
+                {searchTerm ? '검색 결과가 없습니다' : '프로젝트가 없습니다'}
               </h3>
               <p className="mt-2 text-sm text-gray-500">
-                새로운 프로젝트를 생성하여 시작해보세요.
+                {searchTerm
+                  ? '다른 검색어로 시도해보세요.'
+                  : '새로운 프로젝트를 생성하여 시작해보세요.'}
               </p>
-              <div className="mt-6">
-                <button
-                  onClick={() => router.push('/projects/create')}
-                  className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <svg
-                    className="-ml-1 mr-2 h-5 w-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+              {!searchTerm && (
+                <div className="mt-6">
+                  <button
+                    onClick={() => router.push('/projects/create')}
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  새 프로젝트 만들기
-                </button>
-              </div>
+                    <svg
+                      className="-ml-1 mr-2 h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    새 프로젝트 만들기
+                  </button>
+                </div>
+              )}
             </div>
           ) : // 프로젝트 목록 또는 그리드 표시
           viewMode === 'list' ? (
@@ -265,7 +305,7 @@ export default function ProjectsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {projects.map((project) => (
+                  {filteredProjects.map((project) => (
                     <ProjectListItem key={project.id} project={project} />
                   ))}
                 </tbody>
@@ -273,7 +313,7 @@ export default function ProjectsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project) => (
+              {filteredProjects.map((project) => (
                 <ProjectGridItem key={project.id} project={project} />
               ))}
             </div>

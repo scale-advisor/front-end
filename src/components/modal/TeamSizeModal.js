@@ -1,9 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import Button from '../common/Button';
 
 const TeamSizeModal = ({ isOpen, onClose, onSubmit, initialTeamSize = 1 }) => {
   const [teamSize, setTeamSize] = useState(initialTeamSize);
+
+  // 모달이 열릴 때마다 현재 값으로 설정
+  useEffect(() => {
+    if (isOpen) {
+      setTeamSize(initialTeamSize);
+    }
+  }, [isOpen, initialTeamSize]);
 
   const handleSubmit = () => {
     onSubmit({
@@ -11,8 +18,12 @@ const TeamSizeModal = ({ isOpen, onClose, onSubmit, initialTeamSize = 1 }) => {
     });
   };
 
+  const handleClose = () => {
+    onClose();
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="투입 인력 설정">
+    <Modal isOpen={isOpen} onClose={handleClose} title="투입 인력 설정">
       <div className="space-y-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -49,7 +60,7 @@ const TeamSizeModal = ({ isOpen, onClose, onSubmit, initialTeamSize = 1 }) => {
 
         {/* 버튼 */}
         <div className="flex justify-end space-x-3 pt-4">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={handleClose}>
             취소
           </Button>
           <Button

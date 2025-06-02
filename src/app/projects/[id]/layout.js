@@ -9,19 +9,21 @@ import DashboardSkeleton from '@/components/common/DashboardSkeleton';
 
 export default function ProjectLayout({ children }) {
   const { id: projectId } = useParams();
-  const user = useAuthStore((state) => state.user);
 
   // 개별적으로 상태 구독
   const isLoading = useProjectStore((state) => state.isLoading);
   const error = useProjectStore((state) => state.error);
-  const currentProject = useProjectStore((state) => state.currentProject);
   const fetchProjectData = useProjectStore((state) => state.fetchProjectData);
+  const fetchUnitProcesses = useProjectStore(
+    (state) => state.fetchUnitProcesses,
+  );
 
   // 프로젝트 데이터 로딩
   useEffect(() => {
     const loadProjectData = async () => {
       try {
         await fetchProjectData(projectId);
+        await fetchUnitProcesses(projectId);
       } catch (error) {
         console.error('프로젝트 데이터 로딩 실패:', error);
       }
@@ -30,13 +32,8 @@ export default function ProjectLayout({ children }) {
     if (projectId) {
       loadProjectData();
     }
-  }, [projectId, fetchProjectData]);
+  }, []);
 
-  // 디버깅을 위한 상태 로깅
-  useEffect(() => {
-    console.log('현재 로그인된 사용자:', user);
-    console.log('현재 프로젝트:', currentProject);
-  }, [user, currentProject]);
 
   if (isLoading) {
     return (
