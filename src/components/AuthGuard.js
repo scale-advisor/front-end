@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import useAuthStore from '@/store/useAuthStore';
 
 /**
@@ -15,6 +15,7 @@ import useAuthStore from '@/store/useAuthStore';
 export default function AuthGuard({ children, publicPaths = [] }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
 
   // Zustand store에서 필요한 상태들을 가져옴
@@ -64,10 +65,14 @@ export default function AuthGuard({ children, publicPaths = [] }) {
     if (!isPublicPath(pathname)) {
       const localToken = localStorage.getItem('token');
       if (!isAuthenticated && !localToken) {
-        router.push(`/login?returnUrl=${encodeURIComponent(pathname)}`);
+        // 현재 URL의 쿼리 파라미터를 포함한 전체 URL을 생성
+        const currentUrl =
+          pathname +
+          (searchParams.toString() ? `?${searchParams.toString()}` : '');
+        router.push(`/login?returnUrl=${encodeURIComponent(currentUrl)}`);
       }
     }
-  }, [mounted, pathname, isAuthenticated, router]);
+  }, [mounted, pathname, searchParams, isAuthenticated, router]);
 
   // hydration 전에는 아무것도 렌더링하지 않음
   if (!mounted) {

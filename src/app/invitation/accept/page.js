@@ -10,7 +10,7 @@ export default function InvitationAcceptPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isLoggedIn } = useAuthStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -27,8 +27,9 @@ export default function InvitationAcceptPage() {
         }
         return;
       }
+      console.log(isAuthenticated);
 
-      if (!isLoggedIn()) {
+      if (!isAuthenticated) {
         // 로그인 페이지로 리다이렉트하면서 현재 URL을 returnUrl로 저장
         const currentUrl = window.location.href;
         router.push(`/login?returnUrl=${encodeURIComponent(currentUrl)}`);
@@ -42,9 +43,11 @@ export default function InvitationAcceptPage() {
         if (isSubscribed) {
           setStatus('success');
           // 5초 후 프로젝트 목록 페이지로 이동
-          setTimeout(() => {
+          const timer = setTimeout(() => {
             router.push('/projects');
           }, 5000);
+
+          return () => clearTimeout(timer);
         }
       } catch (error) {
         console.log(error);
@@ -63,7 +66,7 @@ export default function InvitationAcceptPage() {
     return () => {
       isSubscribed = false;
     };
-  }, [searchParams, router, isLoggedIn]);
+  }, [searchParams, router, isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">

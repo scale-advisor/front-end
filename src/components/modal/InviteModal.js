@@ -272,7 +272,7 @@ const InviteModal = ({ isOpen, onClose, projectId, onRefresh }) => {
             </div>
             <ul className="text-sm text-orange-700 ml-7 list-disc">
               <li>프로젝트 분석 보기</li>
-              <li>보고서 리스트 확인</li>
+              <li>대시보드 보기</li>
             </ul>
           </div>
         </div>

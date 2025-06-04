@@ -9,20 +9,119 @@ const DEFAULT_SLIDES = [
   {
     title: '쉽고 편하게 프로젝트 규모를 추정하세요',
     description:
-      '규모산정 자원시간 업데이트 FP, SV/정량, LOC 등을 분석하실 수 있습니다. 목록보기로 프로젝트를 관리하세요!',
-    // image: 'path/to/estimate-project-size-image.jpg',
+      '규모산정 자원시간 업데이트 FP, LOC 등을 분석하실 수 있습니다. 목록보기로 프로젝트를 관리하세요!',
+    svgImage: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        className="w-40 h-40"
+      >
+        <defs>
+          <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#93C5FD" />
+            <stop offset="100%" stopColor="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"
+          fill="url(#gradient1)"
+          opacity="0.2"
+        />
+        <path
+          d="M12 7v5l3 3"
+          stroke="url(#gradient1)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path
+          d="M7 12h2m6 0h2"
+          stroke="url(#gradient1)"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
   },
   {
     title: '직관적인 분석 도구로 데이터를 시각화하세요',
     description:
-      '다양한 차트와 그래프를 통해 프로젝트 진행 상황을 한눈에 파악할 수 있습니다.',
-    // image: 'path/to/visualize-data-image.jpg',
+      '다양한 도구와 그래프를 통해 프로젝트 진행 상황을 한눈에 파악할 수 있습니다.',
+    svgImage: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        className="w-40 h-40"
+      >
+        <defs>
+          <linearGradient id="gradient2" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#93C5FD" />
+            <stop offset="100%" stopColor="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M4 4v14c0 1.1.9 2 2 2h14"
+          stroke="url(#gradient2)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path
+          d="M4 18l6-6 4 4 6-6"
+          stroke="url(#gradient2)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <path
+          d="M14 16l4-4 2 2"
+          stroke="url(#gradient2)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.5"
+        />
+      </svg>
+    ),
   },
   {
     title: '팀과 실시간으로 협업하세요',
     description:
       '팀원들과 함께 프로젝트를 관리하고 실시간으로 변경사항을 확인할 수 있습니다.',
-    // image: 'path/to/collaborate-in-real-time-image.jpg',
+    svgImage: (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        className="w-40 h-40"
+      >
+        <defs>
+          <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#93C5FD" />
+            <stop offset="100%" stopColor="#3B82F6" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M12 5c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"
+          fill="url(#gradient3)"
+        />
+        <path
+          d="M12 12.5c-2.33 0-7 1.17-7 3.5v2h14v-2c0-2.33-4.67-3.5-7-3.5z"
+          fill="url(#gradient3)"
+          opacity="0.7"
+        />
+        <path
+          d="M17.5 8c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5z"
+          fill="url(#gradient3)"
+          opacity="0.5"
+        />
+        <path
+          d="M6.5 8c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5z"
+          fill="url(#gradient3)"
+          opacity="0.5"
+        />
+      </svg>
+    ),
   },
 ];
 

@@ -17,6 +17,11 @@ export default function ProjectLayout({ children }) {
   const fetchUnitProcesses = useProjectStore(
     (state) => state.fetchUnitProcesses,
   );
+  
+  const fetchRequirements = useProjectStore(
+    (state) => state.fetchRequirements,
+  );
+
 
   // 프로젝트 데이터 로딩
   useEffect(() => {
@@ -24,6 +29,7 @@ export default function ProjectLayout({ children }) {
       try {
         await fetchProjectData(projectId);
         await fetchUnitProcesses(projectId);
+        await fetchRequirements(projectId);
       } catch (error) {
         console.error('프로젝트 데이터 로딩 실패:', error);
       }

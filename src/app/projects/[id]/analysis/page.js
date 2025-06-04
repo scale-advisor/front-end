@@ -1,187 +1,326 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import useProjectStore from '@/store/useProjectStore';
 import ProjectPathHeader from '@/components/project/ProjectPathNavbar';
+import RequirementList from '@/components/requirement/RequirementList';
+import ProcessList from '@/components/process/ProcessList';
+import ProcessAddModal from '@/components/modal/ProcessAddModal';
+import RequirementAddModal from '@/components/modal/RequirementAddModal';
+import ReanalyzeModal from '@/components/modal/ReanalyzeModal';
+import api from '@/lib/axios';
 
 export default function AnalysisPage() {
-  const { id: projectId } = useParams();
   const currentProject = useProjectStore((state) => state.currentProject);
-  const [selectedFilter, setSelectedFilter] = useState('ALL');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [editingProcess, setEditingProcess] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchType, setSearchType] = useState('all'); // 'all', 'name', 'reqId'
-  const [changes, setChanges] = useState({
-    processNameChanged: false,
-    typeChanged: false,
-  });
-  const [modifiedRows, setModifiedRows] = useState(new Set());
-  const itemsPerPage = 10;
+  const [selectedTab, setSelectedTab] = useState('process');
+  const unitProcesses = useProjectStore((state) => state.unitProcesses);
+  const requirements = useProjectStore((state) => state.requirements);
+  const [tempRequirements, setTempRequirements] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRequirement, setSelectedRequirement] = useState(null);
+  const [isProcessAddModalOpen, setIsProcessAddModalOpen] = useState(false);
+  const [isRequirementAddModalOpen, setIsRequirementAddModalOpen] =
+    useState(false);
+  const [isReanalyzeModalOpen, setIsReanalyzeModalOpen] = useState(false);
+  const [isRecalculateSuccessModalOpen, setIsRecalculateSuccessModalOpen] =
+    useState(false);
 
-  const metrics = [
-    {
-      id: 'EIF',
-      name: 'EIF',
-      value: '20%',
-      count: 6,
-      bgColor: 'bg-[#E3F5FF]',
-      textColor: 'text-[#0090FF]',
-      borderColor: 'border-[#0090FF]',
-    },
-    {
-      id: 'ILF',
-      name: 'ILF',
-      value: '27%',
-      count: 8,
-      bgColor: 'bg-[#E5FFF4]',
-      textColor: 'text-[#00C881]',
-      borderColor: 'border-[#00C881]',
-    },
-    {
-      id: 'EO',
-      name: 'EO',
-      value: '17%',
-      count: 5,
-      bgColor: 'bg-[#F3E8FF]',
-      textColor: 'text-[#9747FF]',
-      borderColor: 'border-[#9747FF]',
-    },
-    {
-      id: 'EI',
-      name: 'EI',
-      value: '23%',
-      count: 7,
-      bgColor: 'bg-[#FFF1E3]',
-      textColor: 'text-[#FF8A00]',
-      borderColor: 'border-[#FF8A00]',
-    },
-    {
-      id: 'EQ',
-      name: 'EQ',
-      value: '13%',
-      count: 4,
-      bgColor: 'bg-[#FFE5E5]',
-      textColor: 'text-[#FF4747]',
-      borderColor: 'border-[#FF4747]',
-    },
-  ];
-
-  const [unitProcesses, setUnitProcesses] = useState(
-    Array.from({ length: 35 }, (_, index) => ({
-      id: index + 1,
-      reqId: `REQ-${String(index + 1).padStart(3, '0')}`,
-      name: `단위 프로세스 ${index + 1}`,
-      type: metrics[index % 5].id,
-      originalName: `단위 프로세스 ${index + 1}`,
-      originalType: metrics[index % 5].id,
+  const [processData, setProcessData] = useState(
+    unitProcesses?.unitProcessList?.map((process, index) => ({
+      id: process.unitProcessId,
+      orderNumber: index + 1,
+      requirementIdList: process.requirementIdList || [],
+      name: process.unitProcessName,
+      type: process.functionType,
+      originalName: process.unitProcessName,
+      originalType: process.functionType,
       isModified: false,
-      modificationType: null, // 'both', 'name', 'type'
-    })),
+      modificationType: null,
+      isAmbiguous: process.isAmbiguous,
+    })) || [],
   );
 
-  const handleEdit = (process) => {
-    setEditingProcess({
-      ...process,
-      originalName: process.name,
-      originalType: process.type,
-    });
-  };
+  const shouldShowRecalculate = useMemo(() => {
+    return processData.some(
+      (process) =>
+        process.type !== process.originalType &&
+        process.name === process.originalName,
+    );
+  }, [processData]);
 
-  const handleSave = () => {
-    if (!editingProcess) return;
-
-    const nameChanged = editingProcess.name !== editingProcess.originalName;
-    const typeChanged = editingProcess.type !== editingProcess.originalType;
-
-    let modificationType = null;
-    if (nameChanged && typeChanged) modificationType = 'both';
-    else if (nameChanged) modificationType = 'name';
-    else if (typeChanged) modificationType = 'type';
-
-    const updatedProcesses = unitProcesses.map((p) =>
-      p.id === editingProcess.id
-        ? {
-            ...editingProcess,
-            isModified: nameChanged || typeChanged,
-            modificationType: modificationType,
-          }
-        : p,
+  const shouldShowReanalyze = useMemo(() => {
+    const hasProcessNameChanges = processData.some(
+      (process) => process.name !== process.originalName,
     );
 
-    setUnitProcesses(updatedProcesses);
+    const hasNewProcesses =
+      processData.length > (unitProcesses?.unitProcessList?.length || 0);
 
-    setChanges({
-      processNameChanged: changes.processNameChanged || nameChanged,
-      typeChanged: changes.typeChanged || typeChanged || nameChanged,
-    });
+    const hasRequirementChanges =
+      tempRequirements &&
+      JSON.stringify(tempRequirements) !== JSON.stringify(requirements);
 
-    if (nameChanged || typeChanged) {
-      setModifiedRows((prev) => new Set([...prev, editingProcess.id]));
+    return hasProcessNameChanges || hasNewProcesses || hasRequirementChanges;
+  }, [processData, unitProcesses, tempRequirements, requirements]);
+
+  useEffect(() => {
+    if (requirements && !tempRequirements) {
+      setTempRequirements(JSON.parse(JSON.stringify(requirements)));
     }
+  }, [requirements]);
 
-    setEditingProcess(null);
+  useEffect(() => {
+    console.log('Requirement Add Modal State:', isRequirementAddModalOpen);
+  }, [isRequirementAddModalOpen]);
+
+  const handleRequirementClick = (requirementIds) => {
+    const requirementsArray = Array.isArray(requirements)
+      ? requirements
+      : requirements.requirementList || [];
+
+    const selectedReqs = requirementsArray.filter((req) =>
+      requirementIds.includes(req.requirementId),
+    );
+
+    setSelectedRequirement(selectedReqs);
+    setIsModalOpen(true);
   };
 
-  const handleCancel = () => {
-    setEditingProcess(null);
+  const handleUpdateProcess = (updatedProcess) => {
+    const updatedProcesses = processData.map((p) =>
+      p.id === updatedProcess.id ? updatedProcess : p,
+    );
+    setProcessData(updatedProcesses);
+    setHasUnsavedChanges(true);
   };
 
-  const handleChange = (field, value) => {
-    setEditingProcess((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleCancelProcesses = () => {
+    setProcessData(
+      unitProcesses?.unitProcessList?.map((process) => ({
+        id: process.unitProcessId,
+        requirementIdList: process.requirementIdList || [],
+        name: process.unitProcessName,
+        type: process.functionType,
+        originalName: process.unitProcessName,
+        originalType: process.functionType,
+        isModified: false,
+        modificationType: null,
+        isAmbiguous: process.isAmbiguous,
+      })) || [],
+    );
+    setHasUnsavedChanges(false);
   };
 
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-    setCurrentPage(1); // 검색 시 첫 페이지로 이동
-  };
+  const handleSaveRequirement = async (updatedData) => {
+    if (!updatedData) return;
 
-  const filteredProcesses = unitProcesses.filter((process) => {
-    // 먼저 타입 필터 적용
-    if (selectedFilter !== 'ALL' && process.type !== selectedFilter) {
-      return false;
+    try {
+      const updatedList = tempRequirements.requirementList.map((req) =>
+        req.requirementId === updatedData.requirementId
+          ? {
+              ...req,
+              requirementName: updatedData.requirementName,
+              requirementDefinition: updatedData.requirementDefinition,
+              requirementDetail: updatedData.requirementDetail,
+            }
+          : req,
+      );
+
+      const newTempRequirements = {
+        ...tempRequirements,
+        requirementList: updatedList,
+      };
+
+      setTempRequirements(newTempRequirements);
+      setHasUnsavedChanges(true);
+    } catch (error) {
+      console.error('요구사항 수정 중 오류 발생:', error);
     }
+  };
 
-    // 검색어가 없으면 타입 필터만 적용된 결과 반환
-    if (!searchTerm) return true;
+  const handleConfirmSave = async () => {
+    try {
+      // TODO: API 호출
+      // const response = await fetch('/api/requirements', {
+      //   method: 'PUT',
+      //   body: JSON.stringify(tempRequirements),
+      // });
 
-    const searchLower = searchTerm.toLowerCase();
+      // API 호출 성공 시
+      useProjectStore.setState({
+        requirements: tempRequirements,
+      });
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('요구사항 저장 중 오류 발생:', error);
+    }
+  };
 
-    // 검색 타입에 따른 필터링
-    switch (searchType) {
-      case 'name':
-        return process.name.toLowerCase().includes(searchLower);
-      case 'reqId':
-        return process.reqId.toLowerCase().includes(searchLower);
-      default: // 'all'
-        return (
-          process.name.toLowerCase().includes(searchLower) ||
-          process.reqId.toLowerCase().includes(searchLower)
+  const handleCancelChanges = () => {
+    setTempRequirements(JSON.parse(JSON.stringify(requirements)));
+    setHasUnsavedChanges(false);
+  };
+
+  const handleRecalculate = async () => {
+    try {
+      const requestBody = {
+        requirementList:
+          tempRequirements?.requirementList.map((req) => ({
+            requirementId: req.requirementId,
+            requirementNumber: req.requirementNumber,
+            requirementName: req.requirementName,
+            requirementDefinition: req.requirementDefinition,
+            requirementDetail: req.requirementDetail,
+            requirementType: req.requirementType,
+          })) || [],
+        unitProcessList: processData.map((process) => ({
+          unitProcessId: process.id.toString(),
+          unitProcessName: process.name,
+          functionType: process.type,
+          isAmbiguous: process.isAmbiguous,
+        })),
+      };
+
+      const response = await api.put(
+        `/projects/${currentProject.id}/versions?versionNumber=1.0`,
+        requestBody,
+      );
+      setHasUnsavedChanges(true);
+      setIsRecalculateSuccessModalOpen(true);
+    } catch (error) {
+      console.error('재산정 중 오류 발생:', error);
+      alert('재산정 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleReanalyzeClick = () => {
+    setIsReanalyzeModalOpen(true);
+  };
+
+  //머신러닝 분류만 하는 함수
+  const handleClassify = async () => {
+    try {
+      // 1. 현재 데이터로 새 버전 생성
+      const requestBody = {
+        requirementList:
+          tempRequirements?.requirementList.map((req) => ({
+            requirementId: req.requirementId,
+            requirementNumber: req.requirementNumber,
+            requirementName: req.requirementName,
+            requirementDefinition: req.requirementDefinition,
+            requirementDetail: req.requirementDetail,
+            requirementType: req.requirementType,
+          })) || [],
+        unitProcessList: processData.map((process) => ({
+          unitProcessId: process.id.toString(),
+          unitProcessName: process.name,
+          functionType: process.type,
+          isAmbiguous: process.isAmbiguous,
+        })),
+      };
+
+      // 새 버전 생성
+      const currentVersion = useProjectStore.getState().currentVersion;
+      console.log('currentVersion', currentVersion);
+
+      const versionResponse = await api.post(
+        `/projects/${currentProject.id}/versions?versionNumber=${currentVersion}`,
+        requestBody,
+      );
+      console.log('newVersionNumber', versionResponse);
+      const newVersionNumber = versionResponse.data.responseData.versionNumber;
+
+      // 2. 재분석 작업 시작
+      const reclassifyResponse = await api.post(
+        `/projects/${currentProject.id}/reclassify?versionNumber=${newVersionNumber}`,
+      );
+      const jobId = reclassifyResponse.data.jobId;
+
+      // 3. 작업 상태 확인
+      const checkJobStatus = async () => {
+        const jobResponse = await api.get(
+          `/projects/${currentProject.id}/analysis/jobs/${jobId}`,
         );
+
+        if (jobResponse.data.status === 'SUCCESS') {
+          // 작업 완료 - 최신 버전으로 이동
+          await useProjectStore
+            .getState()
+            .loadVersion(currentProject.id, newVersionNumber);
+          return true;
+        } else if (jobResponse.data.status === 'FAILED') {
+          throw new Error('재분석 작업이 실패했습니다.');
+        } else {
+          // 아직 진행 중 - 1초 후 다시 확인
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return checkJobStatus();
+        }
+      };
+
+      // 최초 상태 확인 시작
+      const success = await checkJobStatus();
+      if (success) {
+        setHasUnsavedChanges(false);
+      }
+    } catch (error) {
+      console.error('재분석 중 오류 발생:', error);
+      throw error;
     }
-  });
-
-  const totalPages = Math.ceil(filteredProcesses.length / itemsPerPage);
-  const currentProcesses = filteredProcesses.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
-  const getMetricColors = (type) => {
-    const metric = metrics.find((m) => m.id === type);
-    return {
-      bg: metric?.bgColor || 'bg-gray-50',
-      text: metric?.textColor || 'text-gray-700',
-    };
   };
 
-  const getRowBackground = (process) => {
-    if (!process.isModified) return '';
-    return 'bg-yellow-50';
+  //완전 재분석 하는 함수
+  const handleFullReanalyze = async () => {};
+
+  const handleAddProcess = (newProcess) => {
+    const newId = processData.length + 1;
+    const maxOrderNumber = Math.max(
+      ...processData.map((p) => p.orderNumber),
+      0,
+    );
+    const processToAdd = {
+      id: newId,
+      orderNumber: maxOrderNumber + 1,
+      name: newProcess.name,
+      type: newProcess.type,
+      requirementIdList: newProcess.requirementIdList,
+      originalName: newProcess.name,
+      originalType: newProcess.type,
+      isModified: false,
+      modificationType: null,
+      isAmbiguous: false,
+    };
+
+    setProcessData([...processData, processToAdd]);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleDeleteProcess = (processId) => {
+    const updatedProcesses = processData.filter(
+      (process) => process.id !== processId,
+    );
+    setProcessData(updatedProcesses);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleAddRequirement = (newRequirement) => {
+    const requirementToAdd = {
+      requirementId: Date.now().toString(), // 임시 ID
+      requirementNumber: `REQ-${(tempRequirements?.requirementList?.length || 0) + 1}`,
+      ...newRequirement,
+    };
+
+    const newTempRequirements = {
+      ...tempRequirements,
+      requirementList: [
+        ...(tempRequirements?.requirementList || []),
+        requirementToAdd,
+      ],
+    };
+
+    setTempRequirements(newTempRequirements);
+    setHasUnsavedChanges(true);
   };
 
   return (
@@ -199,299 +338,147 @@ export default function AnalysisPage() {
               </p>
             </div>
 
-            {/* 메트릭스 카드 섹션 */}
-            <div className="grid grid-cols-5 gap-6 mb-8">
-              {metrics.map((metric) => (
-                <div
-                  key={metric.id}
-                  className={`rounded-lg shadow-sm border ${
-                    selectedFilter === metric.id
-                      ? 'border-2 ' + metric.borderColor
-                      : 'border-gray-100'
-                  } ${metric.bgColor} hover:shadow-md transition-shadow`}
-                >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <span
-                        className={`text-lg font-semibold ${metric.textColor}`}
-                      >
-                        {metric.name}
-                      </span>
-                      <span
-                        className={`text-sm font-medium px-2 py-1 rounded-full bg-white/50 ${metric.textColor}`}
-                      >
-                        {metric.count}개
-                      </span>
-                    </div>
-                    <div className={`text-2xl font-bold ${metric.textColor}`}>
-                      {metric.value}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* 상단 버튼 섹션 추가 */}
-            <div className="flex justify-end gap-4 mb-6">
-              <div className="relative">
+            {/* 탭 네비게이션 */}
+            <div className="mb-8 border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
                 <button
-                  disabled={!changes.typeChanged || changes.processNameChanged}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    changes.typeChanged && !changes.processNameChanged
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}
-                  data-tooltip-id="recalculate-tooltip"
-                >
-                  재산정
-                </button>
-                {(!changes.typeChanged || changes.processNameChanged) && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                    {changes.processNameChanged
-                      ? '단위프로세스가 변경되어 재분석이 필요합니다'
-                      : '분류 변경사항이 없습니다'}
-                  </div>
-                )}
-              </div>
-              <div className="relative">
-                <button
-                  disabled={!changes.processNameChanged}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    changes.processNameChanged
-                      ? 'bg-green-500 text-white hover:bg-green-600'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  onClick={() => setSelectedTab('process')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    selectedTab === 'process'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  재분석
+                  단위 프로세스
                 </button>
-                {!changes.processNameChanged && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                    단위프로세스 변경사항이 없습니다
-                  </div>
-                )}
-              </div>
+                <button
+                  onClick={() => setSelectedTab('requirement')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    selectedTab === 'requirement'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  요구사항 목록
+                </button>
+              </nav>
             </div>
 
-            {/* 단위프로세스 목록 섹션 */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            {selectedTab === 'process' ? (
+              <>
+                <ProcessList
+                  processData={processData}
+                  requirements={requirements}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onCancel={handleCancelProcesses}
+                  onUpdate={handleUpdateProcess}
+                  onRequirementClick={handleRequirementClick}
+                  onRecalculate={handleRecalculate}
+                  onReanalyze={handleReanalyzeClick}
+                  showRecalculate={
+                    shouldShowRecalculate && !shouldShowReanalyze
+                  }
+                  showReanalyze={shouldShowReanalyze}
+                  hasRequirementChanges={
+                    tempRequirements !== null &&
+                    JSON.stringify(tempRequirements) !==
+                      JSON.stringify(requirements)
+                  }
+                  onAddClick={() => setIsProcessAddModalOpen(true)}
+                  onDelete={handleDeleteProcess}
+                />
+                <ProcessAddModal
+                  isOpen={isProcessAddModalOpen}
+                  onClose={() => setIsProcessAddModalOpen(false)}
+                  onAdd={handleAddProcess}
+                  metrics={[
+                    { id: 'EIF', name: 'EIF' },
+                    { id: 'ILF', name: 'ILF' },
+                    { id: 'EO', name: 'EO' },
+                    { id: 'EI', name: 'EI' },
+                    { id: 'EQ', name: 'EQ' },
+                  ]}
+                  requirements={tempRequirements}
+                />
+                <ReanalyzeModal
+                  isOpen={isReanalyzeModalOpen}
+                  onClose={() => setIsReanalyzeModalOpen(false)}
+                  onClassify={handleClassify}
+                  onFullReanalyze={handleFullReanalyze}
+                />
+              </>
+            ) : (
+              <>
+                <RequirementList
+                  requirements={requirements}
+                  tempRequirements={tempRequirements}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  onSave={handleConfirmSave}
+                  onCancel={handleCancelChanges}
+                  onUpdate={handleSaveRequirement}
+                  onAddClick={() => setIsRequirementAddModalOpen(true)}
+                  onRecalculate={handleRecalculate}
+                  onReanalyze={handleReanalyzeClick}
+                  showRecalculate={
+                    shouldShowRecalculate && !shouldShowReanalyze
+                  }
+                  showReanalyze={shouldShowReanalyze}
+                />
+                <RequirementAddModal
+                  isOpen={isRequirementAddModalOpen}
+                  onClose={() => setIsRequirementAddModalOpen(false)}
+                  onAdd={handleAddRequirement}
+                />
+                <ReanalyzeModal
+                  isOpen={isReanalyzeModalOpen}
+                  onClose={() => setIsReanalyzeModalOpen(false)}
+                  onClassify={handleClassify}
+                  onFullReanalyze={handleFullReanalyze}
+                />
+              </>
+            )}
+          </div>
+        </div>
+        {/* 재산정 성공 모달 */}
+        {isRecalculateSuccessModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-auto transform transition-all">
               <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    단위 프로세스 목록
-                  </h3>
-                  <div className="flex gap-4">
-                    {/* 검색 필터 추가 */}
-                    <div className="flex gap-2">
-                      <select
-                        value={searchType}
-                        onChange={(e) => setSearchType(e.target.value)}
-                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="all">전체 검색</option>
-                        <option value="name">단위프로세스명</option>
-                        <option value="reqId">요구사항 ID</option>
-                      </select>
-                      <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        placeholder="검색어를 입력하세요"
-                        className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+                <div className="flex items-center justify-center mb-6">
+                  <div className="rounded-full bg-green-100 p-3">
+                    <svg
+                      className="h-8 w-8 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
                       />
-                    </div>
-                    <select
-                      value={selectedFilter}
-                      onChange={(e) => {
-                        setSelectedFilter(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      className="px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="ALL">전체 보기</option>
-                      {metrics.map((metric) => (
-                        <option key={metric.id} value={metric.id}>
-                          {metric.name} 보기
-                        </option>
-                      ))}
-                    </select>
-                    <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors">
-                      단위 프로세스 추가
-                    </button>
+                    </svg>
                   </div>
                 </div>
-
-                {/* 검색 결과가 없을 때 메시지 표시 */}
-                {filteredProcesses.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    검색 결과가 없습니다.
-                  </div>
-                )}
-
-                <div className="overflow-x-auto">
-                  <table className="min-w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          No
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          요구사항 ID 출처
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          단위 프로세스명
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          분류
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          작업
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {currentProcesses.map((process) => (
-                        <tr
-                          key={process.id}
-                          className={`hover:bg-gray-50 ${getRowBackground(process)}`}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {process.id}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {process.reqId}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            {editingProcess?.id === process.id ? (
-                              <input
-                                type="text"
-                                value={editingProcess.name}
-                                onChange={(e) =>
-                                  handleChange('name', e.target.value)
-                                }
-                                className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            ) : (
-                              process.name
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {editingProcess?.id === process.id ? (
-                              <select
-                                value={editingProcess.type}
-                                onChange={(e) =>
-                                  handleChange('type', e.target.value)
-                                }
-                                className="px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                {metrics.map((metric) => (
-                                  <option key={metric.id} value={metric.id}>
-                                    {metric.name}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              <span
-                                className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                  getMetricColors(process.type).bg
-                                } ${getMetricColors(process.type).text}`}
-                              >
-                                {process.type}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {editingProcess?.id === process.id ? (
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={handleSave}
-                                  className="text-green-600 hover:text-green-800"
-                                >
-                                  저장
-                                </button>
-                                <button
-                                  onClick={handleCancel}
-                                  className="text-gray-600 hover:text-gray-800"
-                                >
-                                  취소
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleEdit(process)}
-                                className="text-blue-600 hover:text-blue-800"
-                                disabled={editingProcess !== null}
-                              >
-                                수정
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* 페이지네이션 */}
-                <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
-                  <div className="flex items-center text-sm text-gray-500">
-                    총 {filteredProcesses.length}개 항목 중{' '}
-                    {(currentPage - 1) * itemsPerPage + 1}-
-                    {Math.min(
-                      currentPage * itemsPerPage,
-                      filteredProcesses.length,
-                    )}
-                    개 표시
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
-                      disabled={currentPage === 1}
-                      className={`px-3 py-1 rounded ${
-                        currentPage === 1
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                      }`}
-                    >
-                      이전
-                    </button>
-                    <div className="flex items-center space-x-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                        (page) => (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`px-3 py-1 rounded ${
-                              currentPage === page
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                    <button
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
-                      disabled={currentPage === totalPages}
-                      className={`px-3 py-1 rounded ${
-                        currentPage === totalPages
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
-                      }`}
-                    >
-                      다음
-                    </button>
-                  </div>
+                <h3 className="text-xl font-semibold text-center text-gray-900 mb-2">
+                  재산정 완료
+                </h3>
+                <p className="text-gray-600 text-center mb-6">
+                  재산정이 성공적으로 수행되었습니다.
+                </p>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setIsRecalculateSuccessModalOpen(false)}
+                    className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                  >
+                    확인
+                  </button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

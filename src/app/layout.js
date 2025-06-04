@@ -1,5 +1,6 @@
 import './globals.css';
 import AuthGuard from '@/components/AuthGuard';
+import { Suspense } from 'react';
 
 export default function RootLayout({ children }) {
   return (
@@ -9,7 +10,9 @@ export default function RootLayout({ children }) {
         <meta name="description" content="Scale Advisor Application" />
       </head>
       <body>
-        <AuthGuard>{children}</AuthGuard>
+        <Suspense fallback={null}>
+          <AuthGuard>{children}</AuthGuard>
+        </Suspense>
       </body>
     </html>
   );

@@ -26,25 +26,31 @@ import {
   EFFORT_MULTIPLIERS,
   SCALE_FACTORS,
 } from '@/constants/cocomo';
+import AdjustmentFactorModal from '@/components/modal/AdjustmentFactorModal';
+import { ADJUSTMENT_FACTORS } from '@/constants/adjustmentFactors';
+import api from '@/lib/axios';
 
 export default function ProjectDetail() {
   const params = useParams();
   const currentProject = useProjectStore((state) => state.currentProject);
   const unitProcesses = useProjectStore((state) => state.unitProcesses);
   const projectOptions = useProjectStore((state) => state.projectOptions);
+  const adjustmentFactors = useProjectStore((state) => state.adjustmentFactors);
   const updateProjectOptions = useProjectStore(
     (state) => state.updateProjectOptions,
   );
-
+  console.log(adjustmentFactors);
   // 모달 상태 관리
   const [isEstimationModalOpen, setIsEstimationModalOpen] = useState(false);
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false);
   const [isTeamSizeModalOpen, setIsTeamSizeModalOpen] = useState(false);
   const [isUnitCostModalOpen, setIsUnitCostModalOpen] = useState(false);
+  const [isAdjustmentFactorModalOpen, setIsAdjustmentFactorModalOpen] =
+    useState(false);
 
   // 초기 옵션과 수정된 옵션 상태 관리
   const [modifiedOptions, setModifiedOptions] = useState(null);
-
+  console.log(adjustmentFactors);
   // projectOptions가 변경될 때마다 modifiedOptions 업데이트
   useEffect(() => {
     if (projectOptions) {
@@ -52,6 +58,7 @@ export default function ProjectDetail() {
     }
   }, [projectOptions]);
 
+  console.log(modifiedOptions);
   // 변경 사항이 있는지 확인
   const hasChanges =
     JSON.stringify(projectOptions) !== JSON.stringify(modifiedOptions);
@@ -106,6 +113,21 @@ export default function ProjectDetail() {
     setIsUnitCostModalOpen(false);
   };
 
+  const handleAdjustmentFactorSubmit = (data) => {
+    setModifiedOptions((prev) => ({
+      ...prev,
+      adjustmentFactors: data.adjustmentFactors.map((factor) => ({
+        adjustmentFactorType: factor.adjustmentFactorType,
+        adjustmentFactorValue: factor.adjustmentFactorValue,
+        adjustmentFactorLevel:
+          ADJUSTMENT_FACTORS[factor.adjustmentFactorType].options.findIndex(
+            (option) => option.value === factor.adjustmentFactorValue,
+          ) + 1,
+      })),
+    }));
+    setIsAdjustmentFactorModalOpen(false);
+  };
+
   // 모달 닫기 핸들러들 - 취소 시 아무 것도 하지 않음
   const handleEstimationModalClose = () => {
     setIsEstimationModalOpen(false);
@@ -123,10 +145,14 @@ export default function ProjectDetail() {
     setIsUnitCostModalOpen(false);
   };
 
+  const handleAdjustmentFactorModalClose = () => {
+    setIsAdjustmentFactorModalOpen(false);
+  };
+
   // 변경 사항 적용
   const handleApplyChanges = async () => {
     try {
-      await updateProjectOptions(params.id, modifiedOptions);
+      await updateProjectOptions(params.id, modifiedOptions, adjustmentFactors);
     } catch (error) {
       console.error('프로젝트 옵션 업데이트 실패:', error);
     }
@@ -251,6 +277,9 @@ export default function ProjectDetail() {
     const kloc = calculateTotalLOC() / 1000; // KLOC으로 변환
     if (!kloc || kloc <= 0) return 0;
 
+    // 투입 인력수가 0이면 1로 설정 (나누기 0 방지)
+    const teamSize = modifiedOptions?.teamSize || 1;
+
     if (modifiedOptions?.cocomoModel === 'COCOMO_II') {
       // COCOMO II 계산 로직
       const sf = calculateScaleFactor();
@@ -263,8 +292,9 @@ export default function ProjectDetail() {
       // 노력(Person-Month) = a * EAF * (Size)^(b)
       const effort = a * eaf * Math.pow(kloc, b);
 
-      // 개발 기간(월) = c * (노력)^d
-      const duration = TDEV_CONSTANTS.c * Math.pow(effort, TDEV_CONSTANTS.d);
+      // 개발 기간(월) = c * (노력/투입인력수)^d
+      const duration =
+        TDEV_CONSTANTS.c * Math.pow(effort / teamSize, TDEV_CONSTANTS.d);
 
       return Math.round(duration * 10) / 10; // 소수점 첫째자리까지 표시
     } else {
@@ -274,10 +304,32 @@ export default function ProjectDetail() {
       if (!constants) return 0;
 
       const effort = constants.a * Math.pow(kloc, constants.b);
-      const duration = TDEV_CONSTANTS.c * Math.pow(effort, TDEV_CONSTANTS.d);
+      // 개발 기간(월) = c * (노력/투입인력수)^d
+      const duration =
+        TDEV_CONSTANTS.c * Math.pow(effort / teamSize, TDEV_CONSTANTS.d);
 
       return Math.round(duration * 10) / 10;
     }
+  };
+
+  // 보정 후 개발원가 계산
+  const calculateAdjustedCost = () => {
+    // modifiedOptions이 없으면 store의 값 사용
+
+    const factors = modifiedOptions?.adjustmentFactors || adjustmentFactors;
+    console.log(factors);
+    if (!factors || !modifiedOptions?.unitCost) return 0;
+
+    // 모든 보정계수 값을 곱함
+    const totalAdjustmentFactor = factors.reduce((acc, factor) => {
+      return acc * parseFloat(factor.adjustmentFactorValue);
+    }, 1);
+
+    // 보정 전 개발원가 계산
+    const baseCost = modifiedOptions.unitCost * calculateTotalFP();
+
+    // 보정 후 개발원가 계산
+    return Math.round(baseCost * totalAdjustmentFactor);
   };
 
   if (!currentProject) {
@@ -360,16 +412,18 @@ export default function ProjectDetail() {
             />
             <Card
               title="보정 전 개발원가"
-              value={'임시'}
+              value={(
+                modifiedOptions?.unitCost * calculateTotalFP()
+              ).toLocaleString()}
               icon={CalculatorIcon}
               unit="원"
-              onSettingClick={() => setIsCostFactorsModalOpen(true)}
             />
             <Card
               title="보정 후 개발원가"
-              value={'임시'}
+              value={calculateAdjustedCost().toLocaleString()}
               icon={AdjustmentsHorizontalIcon}
               unit="원"
+              onSettingClick={() => setIsAdjustmentFactorModalOpen(true)}
             />
           </div>
 
@@ -437,7 +491,7 @@ export default function ProjectDetail() {
                       key={index}
                       className="flex items-center justify-between"
                     >
-                      <span>버전 {index + 1}</span>
+                      <span>버전 {version}</span>
                       <span className="text-sm text-gray-500">
                         {new Date().toLocaleDateString()}
                       </span>
@@ -490,6 +544,21 @@ export default function ProjectDetail() {
         onClose={handleUnitCostModalClose}
         onSubmit={handleUnitCostSubmit}
         initialUnitCost={modifiedOptions?.unitCost || 0}
+      />
+
+      <AdjustmentFactorModal
+        isOpen={isAdjustmentFactorModalOpen}
+        onClose={handleAdjustmentFactorModalClose}
+        onSubmit={handleAdjustmentFactorSubmit}
+        initialFactors={
+          (modifiedOptions?.adjustmentFactors || adjustmentFactors)?.reduce(
+            (acc, factor) => {
+              acc[factor.adjustmentFactorType] = factor.adjustmentFactorValue;
+              return acc;
+            },
+            {},
+          ) || {}
+        }
       />
     </div>
   );

@@ -10,7 +10,7 @@ function JoinProjectContent() {
   const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isLoggedIn } = useAuthStore();
+  const isAuthenticated  = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
     const joinProject = async () => {
@@ -21,8 +21,8 @@ function JoinProjectContent() {
         setErrorMessage('유효하지 않은 초대 링크입니다.');
         return;
       }
-      console.log(isLoggedIn);
-      if (!isLoggedIn()) {
+ 
+      if (!isAuthenticated) {
         const currentUrl = window.location.href;
         router.push(`/login?returnUrl=${encodeURIComponent(currentUrl)}`);
         return;
@@ -46,7 +46,7 @@ function JoinProjectContent() {
     };
 
     joinProject();
-  }, [searchParams, isLoggedIn, router]);
+  }, [searchParams, isAuthenticated, router]);
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">

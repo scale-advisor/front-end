@@ -49,16 +49,6 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    // 401 에러: 리프레시 토큰 만료, 재로그인 필요
-    if (status === 401) {
-      const authStore = useAuthStore.getState();
-      await authStore.logout();
-      if (router) {
-        router.push('/login');
-      }
-      return Promise.reject(error);
-    }
-
     // 403 에러: 액세스 토큰 만료, 리프레시 토큰으로 재발급 시도
     if (status === 403 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -73,14 +63,18 @@ api.interceptors.response.use(
         // 원래 요청 재시도
         return api(originalRequest);
       } catch (refreshError) {
-        // 토큰 갱신 실패 시 로그아웃 처리
-        const authStore = useAuthStore.getState();
-        await authStore.logout();
-        if (router) {
-          router.push('/login');
-        }
         return Promise.reject(refreshError);
       }
+    }
+
+    // 401 에러: 리프레시 토큰 만료, 재로그인 필요
+    if (status === 401) {
+      const authStore = useAuthStore.getState();
+      await authStore.logout();
+      if (router) {
+        router.push('/login');
+      }
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);

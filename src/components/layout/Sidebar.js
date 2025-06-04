@@ -8,9 +8,11 @@ const Sidebar = () => {
 
   // 현재 프로젝트 상세 페이지인지 확인
   const isProjectPath = pathname.startsWith('/projects/');
+  const isCreatePath = pathname === '/projects/create';
 
-  // 프로젝트 ID 추출
-  const projectId = isProjectPath ? pathname.split('/')[2] : null;
+  // 프로젝트 ID 추출 (create 경로가 아닐 때만)
+  const projectId =
+    isProjectPath && !isCreatePath ? pathname.split('/')[2] : null;
 
   const menuItems = [
     { icon: '📁', name: '목록', path: '/projects', alwaysEnabled: true },
@@ -18,25 +20,25 @@ const Sidebar = () => {
       icon: '📊',
       name: '대시보드',
       path: projectId ? `/projects/${projectId}` : '#',
-      disabled: !projectId,
+      disabled: !projectId || isCreatePath,
     },
     {
       icon: '🔍',
       name: '분석',
       path: projectId ? `/projects/${projectId}/analysis` : '#',
-      disabled: !projectId,
+      disabled: !projectId || isCreatePath,
     },
     {
       icon: '👥',
       name: '팀',
       path: projectId ? `/projects/${projectId}/team` : '#',
-      disabled: !projectId,
+      disabled: !projectId || isCreatePath,
     },
     {
       icon: '⚙️',
       name: '설정',
       path: projectId ? `/projects/${projectId}/settings` : '#',
-      disabled: !projectId,
+      disabled: !projectId || isCreatePath,
     },
   ];
 

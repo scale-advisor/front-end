@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthSidebar from '@/components/layout/AuthSidebar';
 import api from '@/lib/axios';
@@ -10,6 +10,7 @@ import useAuthStore from '@/store/useAuthStore';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -44,8 +45,9 @@ export default function LoginPage() {
       const { success } = await login({ email, password });
 
       if (success) {
-        // 로그인 성공 시 홈으로 리다이렉트
-        router.push('/');
+        // returnUrl이 있으면 해당 URL로, 없으면 홈으로 리다이렉트
+        const returnUrl = searchParams.get('returnUrl');
+        router.push(returnUrl || '/');
       }
     } catch (err) {
       // 오류 처리

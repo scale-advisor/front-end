@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import LanguageSelect, { LANGUAGES } from '../common/LanguageSelect';
+import LanguageSelect from '../common/LanguageSelect';
 
 const ProjectInfoForm = ({ onNext, initialData }) => {
   const [formData, setFormData] = useState({
     name: initialData.name || '',
     budget: initialData.budget || '',
     language: initialData.language || [],
+    languageRates: initialData.languageRates || {},
     teamSize: initialData.teamSize || '',
     description: initialData.description || '',
   });
@@ -46,12 +47,19 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
     });
   };
 
-  const handleLanguageChange = (serverKeys) => {
-    console.log('Selected serverKeys:', serverKeys);
-    setFormData({
-      ...formData,
+  const handleLanguageSubmit = (languages) => {
+    const serverKeys = languages.map((lang) => lang.serverKey);
+    const rates = languages.reduce((acc, lang) => {
+      acc[lang.serverKey] = lang.ratio;
+      return acc;
+    }, {});
+
+    setFormData((prev) => ({
+      ...prev,
       language: serverKeys,
-    });
+      languageRates: rates,
+    }));
+    setIsLanguageModalOpen(false);
   };
 
   const validate = () => {
@@ -92,7 +100,12 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
     console.log('Form data on submit:', formData);
 
     if (validate()) {
-      onNext(formData);
+      // budget의 콤마 제거
+      const submissionData = {
+        ...formData,
+        budget: formData.budget.replace(/,/g, ''),
+      };
+      onNext(submissionData);
     }
   };
 
@@ -161,12 +174,12 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
         >
           {formData.language.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {formData.language.map((lang) => (
+              {formData.language.map((serverKey) => (
                 <span
-                  key={lang}
+                  key={serverKey}
                   className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded"
                 >
-                  {lang}
+                  {serverKey}
                 </span>
               ))}
             </div>
@@ -214,11 +227,10 @@ const ProjectInfoForm = ({ onNext, initialData }) => {
       <LanguageSelect
         isOpen={isLanguageModalOpen}
         onClose={() => setIsLanguageModalOpen(false)}
-        onSubmit={(languages) => {
-          console.log('Languages received from modal:', languages);
-          handleLanguageChange(languages);
-        }}
+        onSubmit={handleLanguageSubmit}
         initialSelectedLanguages={formData.language}
+        initialRates={formData.languageRates}
+        enableAdvancedMode={false}
       />
     </form>
   );

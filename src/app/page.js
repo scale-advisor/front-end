@@ -30,13 +30,13 @@ export default function Home() {
                 </p>
                 <div className="flex space-x-4">
                   <Link
-                    href="/start"
+                    href="/login"
                     className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition shadow-md"
                   >
                     시작하기
                   </Link>
                   <Link
-                    href="/more"
+                    href="/about"
                     className="border border-gray-300 text-gray-700 px-6 py-3 rounded-md hover:bg-gray-50 transition"
                   >
                     더 알아보기

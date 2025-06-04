@@ -307,7 +307,11 @@ const LanguageSelect = ({
       </div>
 
       <div className="mt-6 flex justify-end space-x-3">
-        <Button variant="secondary" onClick={onClose}>
+        <Button
+          variant="secondary"
+          onClick={onClose}
+          className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        >
           취소
         </Button>
         <Button variant="primary" onClick={handleSubmit} disabled={!isValid}>

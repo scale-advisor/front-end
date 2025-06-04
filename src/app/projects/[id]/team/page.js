@@ -26,7 +26,11 @@ export default function TeamPage() {
   const currentProject = useProjectStore((state) => state.currentProject);
   const setMembers = useProjectStore((state) => state.setMembers);
   const currentUserRole = useProjectStore((state) => state.currentUserRole);
+  const membersList = useProjectStore((state) => state.members);
+  console.log(membersList);
+  const userEmail = useAuthStore.getState().user?.email;
 
+  console.log(currentUserRole);
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -89,7 +93,7 @@ export default function TeamPage() {
   const pendingMembers = members.filter(
     (member) => member.state !== 'ACCEPTED',
   );
-  console.log(currentUserRole)
+
   const renderMemberTable = (memberList, title, isPending = false) => (
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-4">
@@ -189,7 +193,8 @@ export default function TeamPage() {
                   </td>
                   {currentUserRole === 'OWNER' &&
                   member.state === 'ACCEPTED' &&
-                  member.email !== user?.email ? (
+                  member.email !== user?.email &&
+                  member.role !== 'OWNER' ? (
                     <td className="px-6 py-4 whitespace-nowrap text-right relative">
                       <div className="relative">
                         <button

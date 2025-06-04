@@ -23,13 +23,14 @@ const useAuthStore = create(
       isAuthenticated: false,
 
       // 토큰 관리 (단일 진실 공급원)
-      setAuthState: (token, userData) => {
+      setAuthState: (token, name, email) => {
         if (token) {
           // 토큰이 있는 경우 - 로그인
           localStorage.setItem('token', token);
           set({
             token,
-            user: userData,
+            user: name,
+            email: email,
             isAuthenticated: true,
           });
         } else {
@@ -114,6 +115,7 @@ const useAuthStore = create(
       partialize: (state) => ({
         token: state.token,
         user: state.user,
+        email: state.email,
         isAuthenticated: state.isAuthenticated,
       }),
     },
