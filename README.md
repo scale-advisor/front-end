@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Scale Advisor 
 
-## Getting Started
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```md
+![Page 1](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0001.jpg)
+![Page 2](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0002.jpg)
+![Page 3](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0003.jpg)
+![Page 4](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0004.jpg)
+![Page 5](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0005.jpg)
+![Page 6](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0006.jpg)
+![Page 7](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0007.jpg)
+![Page 8](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0008.jpg)
+![Page 9](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0009.jpg)
+![Page 10](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0010.jpg)
+![Page 11](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0011.jpg)
+![Page 12](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0012.jpg)
+![Page 13](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0013.jpg)
+![Page 14](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0014.jpg)
+![Page 15](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0015.jpg)
+![Page 16](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0016.jpg)
+![Page 17](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0017.jpg)
+![Page 18](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0018.jpg)
+![Page 19](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0019.jpg)
+![Page 20](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0020.jpg)
+![Page 21](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0021.jpg)
+![Page 22](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0022.jpg)
+![Page 23](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0023.jpg)
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
