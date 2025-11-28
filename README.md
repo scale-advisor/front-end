@@ -1,7 +1,6 @@
 # Scale Advisor 
 
 
-```md
 ![Page 1](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0001.jpg)
 ![Page 2](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0002.jpg)
 ![Page 3](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0003.jpg)
@@ -25,4 +24,4 @@
 ![Page 21](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0021.jpg)
 ![Page 22](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0022.jpg)
 ![Page 23](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0023.jpg)
-```
+
