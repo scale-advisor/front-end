@@ -23,5 +23,3 @@
 ![Page 20](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0020.jpg)
 ![Page 21](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0021.jpg)
 ![Page 22](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0022.jpg)
-![Page 23](./ilovepdf_pages-to-jpg/Scale%20Advisor_page-0023.jpg)
-
